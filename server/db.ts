@@ -319,31 +319,8 @@ export function hashPassword(password: string): string {
 }
 
 export function verifyPassword(password: string, hash: string): boolean {
-  if (hashPassword(password) === hash) return true;
-  const standardPasses = [
-    'RamyaSasurie@123',
-    'Sasurie@123',
-    'College@123',
-    'Student@123',
-    'Admin@123',
-    'StudentPassword@123',
-    'StaffPassword@123',
-    'Staff@123',
-    'SasurieCOE@123',
-    'coe@123',
-    'COE@123',
-    'Password123!',
-    'password123',
-    'AdminPassword@123'
-  ];
-  const standardHashes = standardPasses.map(p => hashPassword(p));
-  if (hash === '2d9cbfc0527fb7c0cbe2d2dd094c84d58835d72f2557c3c312d32cad810d7681') {
-    standardHashes.push(hash);
-  }
-  if (standardHashes.includes(hash)) {
-    return standardPasses.includes(password);
-  }
-  return false;
+  if (!password || !hash) return false;
+  return hashPassword(password) === hash;
 }
 
 // Simple token system using provided SECRET_KEY
@@ -1260,46 +1237,38 @@ class InMemoryDatabase {
   }
 
   ensureAdminsExist() {
-    const adminEmails = [
-      'admin@college.edu',
-      'admin@institution.edu',
-      'ramya@sasurie.edu',
-      'ramyacse23@sasurie.com',
-      'admin@sasurie.edu',
-      'monishas0707@gmail.com'
-    ];
-    const soleAdminPass = 'RamyaSasurie@123';
-
-    for (const em of adminEmails) {
-      let admin = this.users.find(u => u.email.toLowerCase() === em.toLowerCase() || (u.username && u.username.toLowerCase() === em.split('@')[0].toLowerCase()));
-      if (admin) {
-        admin.role = 'ADMIN';
-        if (!admin.password_hash) {
-          admin.password_hash = hashPassword(soleAdminPass);
-        }
-        if (!admin.full_name) {
-          admin.full_name = 'Dr. T. Senthilvel (Principal / Admin)';
-        }
-        if (!admin.username) {
-          admin.username = admin.email.split('@')[0];
-        }
-        admin.is_active = true;
-        admin.is_registered = true;
-      } else {
-        const nextId = Math.max(0, ...this.users.map(u => u.id)) + 1;
-        this.users.push({
-          id: nextId,
-          email: em,
-          username: em.split('@')[0],
-          full_name: 'Dr. T. Senthilvel (Principal / Admin)',
-          password_hash: hashPassword(soleAdminPass),
-          role: 'ADMIN',
-          is_active: true,
-          is_registered: true,
-          created_at: new Date().toISOString()
-        });
+    // Check if an active administrator already exists
+    const adminUsers = this.users.filter(u => u.role === 'ADMIN');
+    if (adminUsers.length > 0) {
+      // Prioritize the admin that has been updated or active
+      const primaryAdmin = adminUsers.find(u => u.updated_at) || adminUsers[0];
+      if (!primaryAdmin.username) {
+        primaryAdmin.username = primaryAdmin.email.split('@')[0];
       }
+      if (!primaryAdmin.full_name) {
+        primaryAdmin.full_name = 'Dr. T. Senthilvel (Principal / Admin)';
+      }
+      primaryAdmin.is_active = true;
+      primaryAdmin.is_registered = true;
+
+      // Keep only this single authoritative administrator so no duplicate admin accounts hold old passwords or usernames
+      this.users = this.users.filter(u => u.role !== 'ADMIN' || u.id === primaryAdmin.id);
+      return;
     }
+
+    // Default admin account for fresh installation
+    const nextId = Math.max(0, ...this.users.map(u => u.id)) + 1;
+    this.users.push({
+      id: nextId,
+      email: 'admin@college.edu',
+      username: 'admin',
+      full_name: 'Dr. T. Senthilvel (Principal / Admin)',
+      password_hash: hashPassword('RamyaSasurie@123'),
+      role: 'ADMIN',
+      is_active: true,
+      is_registered: true,
+      created_at: new Date().toISOString()
+    });
   }
 
   ensureHODsExist() {
@@ -1712,11 +1681,20 @@ class InMemoryDatabase {
     }
     this.students = uniqueStudents;
 
-    // 6. Deduplicate users by email
+    // 6. Deduplicate users by email and keep strictly one authoritative active admin
     const seenEmails = new Set<string>();
+    let seenAdmin = false;
     const uniqueUsers: UserRecord[] = [];
     for (const u of this.users) {
       const emailKey = (u.email || '').toLowerCase().trim();
+      if (u.role === 'ADMIN') {
+        if (!seenAdmin) {
+          seenAdmin = true;
+          if (emailKey) seenEmails.add(emailKey);
+          uniqueUsers.push(u);
+        }
+        continue;
+      }
       if (emailKey && !seenEmails.has(emailKey)) {
         seenEmails.add(emailKey);
         uniqueUsers.push(u);

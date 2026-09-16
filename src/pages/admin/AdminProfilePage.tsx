@@ -120,7 +120,7 @@ export const AdminProfilePage: React.FC = () => {
         email: email.trim().toLowerCase()
       });
 
-      setProfileSuccessMsg(res.data.message || 'Administrator profile updated successfully!');
+      setProfileSuccessMsg(res.data.message || 'Administrator profile updated successfully! Please note that old usernames and emails are invalidated immediately.');
       
       // Update local storage and context
       if (res.data.user) {
@@ -175,7 +175,7 @@ export const AdminProfilePage: React.FC = () => {
         confirm_password: confirmPassword
       });
 
-      setPasswordSuccessMsg(res.data.message || 'Password changed successfully! Next time log in with your new password.');
+      setPasswordSuccessMsg(res.data.message || 'Password changed successfully! Old password is permanently invalidated. Use your new password for all subsequent logins.');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
@@ -568,7 +568,7 @@ export const AdminProfilePage: React.FC = () => {
               Administrative Security Policy
             </div>
             <p className="text-[11px] text-slate-500 leading-relaxed">
-              Password changes are logged with timestamp and network IP in the audit trail. Once changed, all future logins will require the updated password.
+              Password and credential changes take effect immediately and are logged with timestamp in the audit trail. Once changed, old passwords and old usernames are completely disabled and cannot be used to gain access.
             </p>
           </div>
         </div>

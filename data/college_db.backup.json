@@ -34,10 +34,10 @@
       "is_active": true,
       "is_registered": true,
       "created_at": "2026-09-10T04:09:19.799Z",
-      "updated_at": null,
+      "updated_at": "2026-09-16T13:48:51.743Z",
       "department_id": null,
       "full_name": "Dr. T. Senthilvel (Principal / Admin)",
-      "username": "admin"
+      "username": "super_admin_2026"
     },
     {
       "id": 4,
@@ -1413,6 +1413,15 @@
       "is_active": true,
       "is_registered": true,
       "created_at": "2026-09-16T06:37:39.730Z"
+    },
+    {
+      "id": 133,
+      "email": "chithracse24@sasurie.com",
+      "password_hash": "3c922db43f2c5383106c1c34ffe0e3934b265aabecacab9e36a0d28ef90359d2",
+      "role": "STUDENT",
+      "is_active": true,
+      "is_registered": true,
+      "created_at": "2026-09-16T13:33:11.744Z"
     }
   ],
   "departments": [
@@ -2926,6 +2935,23 @@
       "section": "A",
       "admission_year": 2026,
       "created_at": "2026-09-14T09:43:35.272Z"
+    },
+    {
+      "id": 66,
+      "user_id": 133,
+      "register_number": "732424108003",
+      "full_name": "Chithra M",
+      "email": "chithracse24@sasurie.com",
+      "phone": "",
+      "department_id": 1,
+      "course_id": 1,
+      "year": 3,
+      "semester": 5,
+      "section": "A",
+      "admission_year": 2024,
+      "created_at": "2026-09-16T13:33:11.744Z",
+      "student_type": "Hosteller",
+      "is_hosteller": true
     }
   ],
   "staff": [
@@ -4238,7 +4264,7 @@
           "faculty_email": "hostel@sasurie.edu",
           "faculty_id": 9,
           "signature_date": "16/09/2026",
-          "requirement_description": "Hostel room inventory handover & mess fee bill clearance.",
+          "requirement_description": "Not applicable for Day Scholar students (Exempted)",
           "category_key": "hostel"
         },
         {
@@ -5209,6 +5235,237 @@
       "principal_approved_at": "2026-09-14T12:05:44.305Z",
       "reviewed_at": "2026-09-14T12:05:48.036Z",
       "reviewed_by": 1
+    },
+    {
+      "id": 10,
+      "student_id": 66,
+      "status": "under_review",
+      "submitted_at": "2026-09-16T13:34:24.393Z",
+      "remarks": "End semester Examination No Due Clearance -",
+      "created_at": "2026-09-16T13:34:24.393Z",
+      "exam_type": "End Semester Examinations",
+      "form_date": "16/09/2026",
+      "academic_year": "2025-26",
+      "year": 3,
+      "semester": 5,
+      "student_type": "hosteller",
+      "attendance_percentage": 98,
+      "attendance_month": "August",
+      "undertaking_status": "Exempted",
+      "subjects": [
+        {
+          "slot": "Sub 1",
+          "name": "Computer Networks",
+          "code": "CS3591",
+          "dues_status": "Pending Verification",
+          "faculty_name": "Prof. S. Rajesh",
+          "faculty_id": 40,
+          "faculty_email": "chiefmentor@sasurie.edu",
+          "signature_date": "-"
+        },
+        {
+          "slot": "Sub 2",
+          "name": "Theory of Computation",
+          "code": "CS3501",
+          "dues_status": "Pending Verification",
+          "faculty_name": "Prof. P. Vijay",
+          "faculty_id": 41,
+          "faculty_email": "vijay.faculty@sasurie.edu",
+          "signature_date": "-"
+        },
+        {
+          "slot": "Sub 3",
+          "name": "Cryptography and Cyber Security",
+          "code": "CB3491",
+          "dues_status": "Pending Verification",
+          "faculty_name": "Dr. K. Ramesh",
+          "faculty_id": 23,
+          "faculty_email": "ramesh@sasurie.edu",
+          "signature_date": "-"
+        },
+        {
+          "slot": "Sub 4",
+          "name": "Distributed Computing & Cloud",
+          "code": "CS3551",
+          "dues_status": "Pending Verification",
+          "faculty_name": "Prof. S. Vignesh",
+          "faculty_id": 45,
+          "faculty_email": "vignesh.faculty@sasurie.edu",
+          "signature_date": "-"
+        },
+        {
+          "slot": "Sub 5",
+          "name": "Professional Elective - I (Full Stack Dev)",
+          "code": "PE3501",
+          "dues_status": "Pending Verification",
+          "faculty_name": "Prof. B. Anitha",
+          "faculty_id": 27,
+          "faculty_email": "anitha@sasurie.edu",
+          "signature_date": "-"
+        },
+        {
+          "slot": "Sub 6",
+          "name": "Career Development Centre - Level 3",
+          "code": "CDC005",
+          "dues_status": "Pending Verification",
+          "faculty_name": "Prof. T. Hariprasad",
+          "faculty_id": 28,
+          "faculty_email": "hariprasad@sasurie.edu",
+          "signature_date": "-"
+        }
+      ],
+      "labs": [
+        {
+          "slot": "Lab 1",
+          "name": "Compiler Design Laboratory",
+          "code": "CS3561",
+          "dues_status": "Pending Verification",
+          "faculty_name": "Prof. P. Vijay",
+          "faculty_id": 41,
+          "faculty_email": "vijay.faculty@sasurie.edu",
+          "signature_date": "-"
+        },
+        {
+          "slot": "Lab 2",
+          "name": "Computer Networks Laboratory",
+          "code": "CS3581",
+          "dues_status": "Pending Verification",
+          "faculty_name": "Prof. S. Rajesh",
+          "faculty_id": 40,
+          "faculty_email": "chiefmentor@sasurie.edu",
+          "signature_date": "-"
+        }
+      ],
+      "common_nodes": [
+        {
+          "slot": "COM-LIB",
+          "name": "Central Library & Book Bank",
+          "code": "LIB-101",
+          "dues_status": "Pending Review",
+          "faculty_name": "Mr. D. Vinoth",
+          "faculty_email": "vinoth.library@sasurie.edu",
+          "faculty_id": 39,
+          "signature_date": "-",
+          "requirement_description": "Return all issued library books, project journals & clear fine liabilities.",
+          "category_key": "library",
+          "applies_to": "all"
+        },
+        {
+          "slot": "COM-ACC",
+          "name": "Accounts & College Finance Office",
+          "code": "ACC-101",
+          "dues_status": "Pending Review",
+          "faculty_name": "Mrs. V. Revathi, M.Com.",
+          "faculty_email": "accounts@sasurie.edu",
+          "faculty_id": 8,
+          "signature_date": "-",
+          "requirement_description": "Full semester tuition fee, special fees & examination fee clearance.",
+          "category_key": "accounts",
+          "applies_to": "all"
+        },
+        {
+          "slot": "COM-TRN",
+          "name": "College Bus & Transport Section",
+          "code": "TRN-101",
+          "dues_status": "Exempted (Hosteller)",
+          "faculty_name": "K.Murugesan",
+          "faculty_email": "transport@sasurie.edu",
+          "faculty_id": 10,
+          "signature_date": "16/09/2026",
+          "requirement_description": "Not applicable for Hosteller students (Exempted)",
+          "category_key": "transport",
+          "applies_to": "day_scholar"
+        },
+        {
+          "slot": "COM-HST",
+          "name": "Campus Hostel & Mess Section",
+          "code": "HST-101",
+          "dues_status": "Pending Review",
+          "faculty_name": "Mr. K. Manoharan",
+          "faculty_email": "hostel@sasurie.edu",
+          "faculty_id": 9,
+          "signature_date": "-",
+          "requirement_description": "Hostel room inventory handover & mess fee bill clearance",
+          "category_key": "hostel",
+          "applies_to": "hostel"
+        },
+        {
+          "slot": "COM-PED",
+          "name": "Physical Education & Sports Department",
+          "code": "PED-101",
+          "dues_status": "Pending Review",
+          "faculty_name": "Prof. P. Ravichandran (Physical Director)",
+          "faculty_email": "sports@sasurie.edu",
+          "faculty_id": 58,
+          "signature_date": "-",
+          "requirement_description": "Return of tournament kits, jerseys & sports equipment.",
+          "category_key": "sports",
+          "applies_to": "all"
+        },
+        {
+          "slot": "COM-COE",
+          "name": "Office of Controller of Examinations (CoE)",
+          "code": "COE-101",
+          "dues_status": "Pending Review",
+          "faculty_name": "Dr. H. Sasipal (CoE)",
+          "faculty_email": "coe@sasurie.edu",
+          "faculty_id": 5,
+          "signature_date": "-",
+          "requirement_description": "Exam registration confirmation & hall ticket verification.",
+          "category_key": "exam_cell",
+          "applies_to": "all"
+        }
+      ],
+      "signatories": {
+        "chief_mentor": {
+          "signed": false,
+          "name": "-",
+          "date": "-",
+          "status": "pending"
+        },
+        "hod": {
+          "signed": false,
+          "name": "-",
+          "date": "-",
+          "status": "pending"
+        },
+        "coe": {
+          "signed": false,
+          "name": "-",
+          "date": "-",
+          "status": "pending"
+        },
+        "principal": {
+          "signed": false,
+          "name": "-",
+          "date": "-",
+          "status": "pending"
+        },
+        "library": {
+          "signed": false,
+          "name": "-",
+          "date": "-",
+          "status": "pending"
+        },
+        "transport": {
+          "signed": true,
+          "name": "Exempted (Hosteller)",
+          "date": "16/09/2026",
+          "status": "exempted"
+        },
+        "hostel": {
+          "signed": false,
+          "name": "-",
+          "date": "-",
+          "status": "pending"
+        },
+        "office_accounts": {
+          "signed": false,
+          "name": "-",
+          "date": "-",
+          "status": "pending"
+        }
+      }
     }
   ],
   "noDueApprovals": [
@@ -5758,6 +6015,87 @@
     }
   ],
   "notifications": [
+    {
+      "id": 192,
+      "user_id": 133,
+      "title": "Official No Due Request Submitted",
+      "message": "Your End Semester Examinations No Due Form has been initiated with 14 clearance sections and routed for verification.",
+      "notification_type": "info",
+      "is_read": false,
+      "created_at": "2026-09-16T13:34:24.456Z"
+    },
+    {
+      "id": 191,
+      "user_id": 23,
+      "title": "Subject Clearance Application Submitted",
+      "message": "Student Chithra M (732424108003) applied for clearance in Computer Networks Laboratory (Lab 2). Please verify and accept.",
+      "notification_type": "info",
+      "is_read": false,
+      "created_at": "2026-09-16T13:34:24.441Z"
+    },
+    {
+      "id": 190,
+      "user_id": 111,
+      "title": "Subject Clearance Application Submitted",
+      "message": "Student Chithra M (732424108003) applied for clearance in Compiler Design Laboratory (Lab 1). Please verify and accept.",
+      "notification_type": "info",
+      "is_read": false,
+      "created_at": "2026-09-16T13:34:24.436Z"
+    },
+    {
+      "id": 189,
+      "user_id": 110,
+      "title": "Subject Clearance Application Submitted",
+      "message": "Student Chithra M (732424108003) applied for clearance in Career Development Centre - Level 3 (Sub 6). Please verify and accept.",
+      "notification_type": "info",
+      "is_read": false,
+      "created_at": "2026-09-16T13:34:24.429Z"
+    },
+    {
+      "id": 188,
+      "user_id": 109,
+      "title": "Subject Clearance Application Submitted",
+      "message": "Student Chithra M (732424108003) applied for clearance in Professional Elective - I (Full Stack Dev) (Sub 5). Please verify and accept.",
+      "notification_type": "info",
+      "is_read": false,
+      "created_at": "2026-09-16T13:34:24.422Z"
+    },
+    {
+      "id": 187,
+      "user_id": 115,
+      "title": "Subject Clearance Application Submitted",
+      "message": "Student Chithra M (732424108003) applied for clearance in Distributed Computing & Cloud (Sub 4). Please verify and accept.",
+      "notification_type": "info",
+      "is_read": false,
+      "created_at": "2026-09-16T13:34:24.414Z"
+    },
+    {
+      "id": 186,
+      "user_id": 105,
+      "title": "Subject Clearance Application Submitted",
+      "message": "Student Chithra M (732424108003) applied for clearance in Cryptography and Cyber Security (Sub 3). Please verify and accept.",
+      "notification_type": "info",
+      "is_read": false,
+      "created_at": "2026-09-16T13:34:24.407Z"
+    },
+    {
+      "id": 185,
+      "user_id": 111,
+      "title": "Subject Clearance Application Submitted",
+      "message": "Student Chithra M (732424108003) applied for clearance in Theory of Computation (Sub 2). Please verify and accept.",
+      "notification_type": "info",
+      "is_read": false,
+      "created_at": "2026-09-16T13:34:24.401Z"
+    },
+    {
+      "id": 184,
+      "user_id": 23,
+      "title": "Subject Clearance Application Submitted",
+      "message": "Student Chithra M (732424108003) applied for clearance in Computer Networks (Sub 1). Please verify and accept.",
+      "notification_type": "info",
+      "is_read": false,
+      "created_at": "2026-09-16T13:34:24.395Z"
+    },
     {
       "id": 183,
       "user_id": 129,
@@ -7407,6 +7745,182 @@
     }
   ],
   "auditLogs": [
+    {
+      "id": 622,
+      "user_id": 89,
+      "user_email": "admin@college.edu",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 89,
+      "new_values": "{\"identifier\":\"admin\",\"role\":\"ADMIN\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-16T13:48:51.808Z"
+    },
+    {
+      "id": 621,
+      "user_id": 3,
+      "user_email": "admin@sasurie.edu",
+      "action": "ADMIN_PASSWORD_CHANGED",
+      "entity_type": "USER",
+      "entity_id": 3,
+      "new_values": "{\"email\":\"admin@sasurie.edu\",\"username\":\"super_admin_2026\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-16T13:48:51.749Z"
+    },
+    {
+      "id": 620,
+      "user_id": 3,
+      "user_email": "admin@sasurie.edu",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 3,
+      "new_values": "{\"identifier\":\"super_admin_2026\",\"role\":\"ADMIN\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-16T13:48:51.637Z"
+    },
+    {
+      "id": 619,
+      "user_id": 3,
+      "user_email": "admin@sasurie.edu",
+      "action": "ADMIN_PROFILE_UPDATED",
+      "entity_type": "USER",
+      "entity_id": 3,
+      "new_values": "{\"full_name\":\"Dr. T. Senthilvel (Principal / Admin)\",\"username\":\"super_admin_2026\",\"email\":\"admin@sasurie.edu\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-16T13:48:50.931Z"
+    },
+    {
+      "id": 618,
+      "user_id": 3,
+      "user_email": "admin@sasurie.edu",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 3,
+      "new_values": "{\"identifier\":\"admin\",\"role\":\"ADMIN\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-16T13:48:50.916Z"
+    },
+    {
+      "id": 617,
+      "user_id": 3,
+      "user_email": "admin@sasurie.edu",
+      "action": "ADMIN_PASSWORD_CHANGED",
+      "entity_type": "USER",
+      "entity_id": 3,
+      "new_values": "{\"email\":\"admin@sasurie.edu\",\"username\":\"admin\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-16T13:48:50.207Z"
+    },
+    {
+      "id": 616,
+      "user_id": 3,
+      "user_email": "admin@sasurie.edu",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 3,
+      "new_values": "{\"identifier\":\"admin\",\"role\":\"ADMIN\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-16T13:48:49.405Z"
+    },
+    {
+      "id": 615,
+      "user_id": 1,
+      "user_email": "ramya@sasurie.edu",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 1,
+      "new_values": "{\"identifier\":\"ramya@sasurie.edu\",\"role\":\"ADMIN\"}",
+      "ip_address": "2409:40f4:2104:74eb:567:9434:e1f6:a0bf",
+      "created_at": "2026-09-16T13:36:42.077Z"
+    },
+    {
+      "id": 614,
+      "user_id": 133,
+      "user_email": "chithracse24@sasurie.com",
+      "action": "USER_LOGOUT",
+      "entity_type": "USER",
+      "entity_id": 133,
+      "new_values": "{\"email\":\"chithracse24@sasurie.com\"}",
+      "ip_address": "2409:40f4:2104:74eb:567:9434:e1f6:a0bf",
+      "created_at": "2026-09-16T13:36:29.842Z"
+    },
+    {
+      "id": 613,
+      "user_id": 133,
+      "user_email": "chithracse24@sasurie.com",
+      "action": "NO_DUE_REQUEST_CREATED",
+      "entity_type": "NO_DUE_REQUEST",
+      "entity_id": 10,
+      "new_values": "{\"exam_type\":\"End Semester Examinations\"}",
+      "ip_address": "2409:40f4:2104:74eb:567:9434:e1f6:a0bf",
+      "created_at": "2026-09-16T13:34:24.451Z"
+    },
+    {
+      "id": 612,
+      "user_id": 133,
+      "user_email": "chithracse24@sasurie.com",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 133,
+      "new_values": "{\"identifier\":\"chithracse24@sasurie.com\",\"role\":\"STUDENT\"}",
+      "ip_address": "2409:40f4:2104:74eb:567:9434:e1f6:a0bf",
+      "created_at": "2026-09-16T13:33:22.249Z"
+    },
+    {
+      "id": 611,
+      "user_id": 1,
+      "user_email": "ramya@sasurie.edu",
+      "action": "USER_LOGOUT",
+      "entity_type": "USER",
+      "entity_id": 1,
+      "new_values": "{\"email\":\"ramya@sasurie.edu\"}",
+      "ip_address": "2409:40f4:2104:74eb:567:9434:e1f6:a0bf",
+      "created_at": "2026-09-16T13:33:16.463Z"
+    },
+    {
+      "id": 610,
+      "user_id": 1,
+      "user_email": "ramya@sasurie.edu",
+      "action": "STUDENT_CREATED",
+      "entity_type": "STUDENT",
+      "entity_id": 66,
+      "new_values": "{\"full_name\":\"Chithra M\",\"register_number\":\"732424108003\",\"email\":\"chithracse24@sasurie.com\",\"password\":\"Sasurie@123\",\"phone\":\"\",\"department_id\":1,\"course_id\":1,\"year\":3,\"semester\":5,\"section\":\"A\",\"admission_year\":2024}",
+      "ip_address": "2409:40f4:2104:74eb:567:9434:e1f6:a0bf",
+      "created_at": "2026-09-16T13:33:11.801Z"
+    },
+    {
+      "id": 609,
+      "user_id": 1,
+      "user_email": "ramya@sasurie.edu",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 1,
+      "new_values": "{\"identifier\":\"ramya@sasurie.edu\",\"role\":\"ADMIN\"}",
+      "ip_address": "2409:40f4:2104:74eb:567:9434:e1f6:a0bf",
+      "created_at": "2026-09-16T13:31:29.366Z"
+    },
+    {
+      "id": 608,
+      "user_id": 35,
+      "user_email": "divya23@sasurie.com",
+      "action": "USER_LOGOUT",
+      "entity_type": "USER",
+      "entity_id": 35,
+      "new_values": "{\"email\":\"divya23@sasurie.com\"}",
+      "ip_address": "2409:40f4:2104:74eb:567:9434:e1f6:a0bf",
+      "created_at": "2026-09-16T13:30:50.827Z"
+    },
+    {
+      "id": 607,
+      "user_id": 35,
+      "user_email": "divya23@sasurie.com",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 35,
+      "new_values": "{\"identifier\":\"732423104001\",\"role\":\"STUDENT\"}",
+      "ip_address": "2409:40f4:2104:74eb:567:9434:e1f6:a0bf",
+      "created_at": "2026-09-16T13:30:13.137Z"
+    },
     {
       "id": 606,
       "user_id": 132,
@@ -28961,7 +29475,7 @@
       "faculty_name": "K.Murugesan",
       "faculty_email": "transport@sasurie.edu",
       "requirement_description": "Bus pass surrender or transport route fee clearance.",
-      "applies_to": "all",
+      "applies_to": "day_scholar",
       "category_key": "transport",
       "is_active": true,
       "is_elective": false
@@ -29036,8 +29550,8 @@
     "noDueRequests": 10,
     "noDueApprovals": 58,
     "certificates": 13,
-    "notifications": 184,
-    "auditLogs": 607,
+    "notifications": 193,
+    "auditLogs": 623,
     "subjectCourses": 1034
   }
 }

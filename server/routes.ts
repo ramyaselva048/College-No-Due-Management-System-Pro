@@ -132,16 +132,6 @@ apiRouter.post('/admin/sync-database', async (req, res) => {
 // ----------------------------------------------------
 // Authentication Routes (/api/auth)
 // ----------------------------------------------------
-const COLLEGE_ADMIN_EMAILS = [
-  'admin@college.edu',
-  'admin@college.ac.in',
-  'admin@institution.edu',
-  'ramya@sasurie.edu',
-  'ramyacse23@sasurie.com',
-  'admin@sasurie.edu',
-  'monishas0707@gmail.com',
-  'monisha23@sasurie.com'
-];
 
 // Verification endpoint: Informs client that self-registration is permanently disabled
 apiRouter.post('/auth/verify-student', (req: Request, res: Response) => {
@@ -187,21 +177,12 @@ apiRouter.post('/auth/login', (req: Request, res: Response) => {
   let user: UserRecord | undefined;
 
   if (requestedRole === 'ADMIN') {
-    user = db.users.find(u => u.role === 'ADMIN' && (
-      u.email.toLowerCase() === lowerIdentifier ||
-      (u.username && u.username.toLowerCase() === lowerIdentifier)
-    ));
-    if (!user) {
-      user = db.users.find(u => u.role === 'ADMIN' && (
-        COLLEGE_ADMIN_EMAILS.map(e => e.toLowerCase()).includes(lowerIdentifier) && COLLEGE_ADMIN_EMAILS.map(e => e.toLowerCase()).includes(u.email.toLowerCase())
-      ));
-    }
-    if (!user) {
-      user = db.users.find(u => (u.email.toLowerCase() === lowerIdentifier || (u.username && u.username.toLowerCase() === lowerIdentifier)) && u.role === 'ADMIN');
-    }
-    if (!user) {
-      user = db.users.find(u => u.email.toLowerCase() === lowerIdentifier || (u.username && u.username.toLowerCase() === lowerIdentifier));
-    }
+    // Strictly find the active ADMIN account matching the exact updated username or email only
+    user = db.users.find(u =>
+      u.role === 'ADMIN' &&
+      u.is_active !== false &&
+      (u.email.toLowerCase() === lowerIdentifier || (u.username && u.username.toLowerCase() === lowerIdentifier))
+    );
   } else if (requestedRole === 'HOD') {
     if (staff) {
       user = db.users.find(u => u.id === staff!.user_id || u.email.toLowerCase() === staff!.email.toLowerCase());
@@ -417,11 +398,15 @@ apiRouter.post('/auth/login', (req: Request, res: Response) => {
 });
 
 apiRouter.post('/auth/reset-password', (req: Request, res: Response) => {
-  const identifierField = (req.body.identifier || req.body.email || req.body.employee_id || req.body.register_number || '').toString().trim();
-  const newPassword = (req.body.new_password || req.body.password || 'StaffPassword@123').toString().trim();
+  const identifierField = (req.body.identifier || req.body.email || req.body.employee_id || req.body.register_number || req.body.username || '').toString().trim();
+  const newPassword = (req.body.new_password || req.body.password || '').toString().trim();
 
   if (!identifierField) {
-    return res.status(400).json({ detail: 'Please provide your Employee ID, Register Number, or College Email.' });
+    return res.status(400).json({ detail: 'Please provide your Username, Employee ID, Register Number, or College Email.' });
+  }
+
+  if (!newPassword || newPassword.length < 6) {
+    return res.status(400).json({ detail: 'New password must be at least 6 characters long.' });
   }
 
   const upperIdentifier = identifierField.toUpperCase();
@@ -431,8 +416,8 @@ apiRouter.post('/auth/reset-password', (req: Request, res: Response) => {
   const staff = db.staff.find(s => s.employee_id.toUpperCase() === upperIdentifier || s.email.toLowerCase() === lowerIdentifier);
   // Check student
   const student = db.students.find(s => s.register_number.toUpperCase() === upperIdentifier || s.email.toLowerCase() === lowerIdentifier);
-  // Check user
-  let user = db.users.find(u => u.email.toLowerCase() === lowerIdentifier);
+  // Check user by email or username
+  let user = db.users.find(u => u.email.toLowerCase() === lowerIdentifier || (u.username && u.username.toLowerCase() === lowerIdentifier));
   if (!user && staff) {
     user = db.users.find(u => u.id === staff.user_id || u.email.toLowerCase() === staff.email.toLowerCase());
   }
@@ -441,13 +426,26 @@ apiRouter.post('/auth/reset-password', (req: Request, res: Response) => {
   }
 
   if (!user) {
-    return res.status(404).json({ detail: 'No registered account found matching this identifier. Please verify your Employee ID or Email.' });
+    return res.status(404).json({ detail: 'No registered account found matching this identifier. Please verify your Username, Employee ID, or Email.' });
   }
 
   user.password_hash = hashPassword(newPassword);
   if ((user.role as string) === 'COE' || (user.role as string) === 'PRINCIPAL') {
     user.role = 'STAFF';
   }
+
+  if (req.body.new_username && user.role === 'ADMIN') {
+    const cleanUsername = req.body.new_username.toString().trim().toLowerCase();
+    if (cleanUsername.length >= 3 && /^[a-zA-Z0-9._-]+$/.test(cleanUsername)) {
+      user.username = cleanUsername;
+    }
+  }
+
+  if (user.role === 'ADMIN') {
+    // Purge duplicate admin records so only this single updated admin account exists
+    db.users = db.users.filter(u => u.role !== 'ADMIN' || u.id === user.id);
+  }
+
   user.updated_at = new Date().toISOString();
 
   db.saveToFile();
@@ -456,10 +454,11 @@ apiRouter.post('/auth/reset-password', (req: Request, res: Response) => {
 
   return res.json({
     success: true,
-    message: `Password successfully updated for ${staff?.full_name || student?.full_name || user.email}.`,
+    message: `Password successfully updated. You must now sign in using your updated credentials.`,
     role: user.role,
     email: user.email,
-    identifier: staff?.employee_id || student?.register_number || user.email
+    username: user.username,
+    identifier: user.username || staff?.employee_id || student?.register_number || user.email
   });
 });
 
@@ -2930,9 +2929,6 @@ apiRouter.patch('/admin/profile', authMiddleware, requireRole(['ADMIN']), (req: 
       return res.status(400).json({ detail: 'This email is already associated with another account.' });
     }
     user.email = cleanEmail;
-    if (!COLLEGE_ADMIN_EMAILS.includes(cleanEmail)) {
-      COLLEGE_ADMIN_EMAILS.push(cleanEmail);
-    }
   }
 
   if (username !== undefined) {
@@ -2958,6 +2954,9 @@ apiRouter.patch('/admin/profile', authMiddleware, requireRole(['ADMIN']), (req: 
     }
     user.full_name = full_name.trim();
   }
+
+  // Ensure no other admin accounts exist in db.users with stale/old credentials
+  db.users = db.users.filter(u => u.role !== 'ADMIN' || u.id === user.id);
 
   user.updated_at = new Date().toISOString();
   db.saveToFile();
@@ -3004,6 +3003,10 @@ apiRouter.post('/admin/change-password', authMiddleware, requireRole(['ADMIN']),
 
   user.password_hash = hashPassword(new_password);
   user.updated_at = new Date().toISOString();
+
+  // Ensure all duplicate admin records are removed so old passwords never linger
+  db.users = db.users.filter(u => u.role !== 'ADMIN' || u.id === user.id);
+
   db.saveToFile();
   db.queueSyncToPostgres();
 
