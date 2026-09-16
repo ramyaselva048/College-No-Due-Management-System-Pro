@@ -1153,7 +1153,7 @@ class InMemoryDatabase {
         faculty_name: transportStaff ? transportStaff.full_name : 'Mr. K. Murugesan (Transport In-Charge)',
         faculty_email: transportStaff ? transportStaff.email : 'transport@sasurie.edu',
         requirement_description: 'Bus pass surrender or transport route fee clearance.',
-        applies_to: 'all' as const,
+        applies_to: 'day_scholar' as const,
         category_key: 'transport'
       },
       {
@@ -1237,7 +1237,13 @@ class InMemoryDatabase {
         if (!existing.faculty_name || existing.faculty_name.startsWith('Staff')) existing.faculty_name = item.faculty_name;
         if (!existing.faculty_email) existing.faculty_email = item.faculty_email;
         if (!existing.category_key) existing.category_key = item.category_key;
-        if (!existing.applies_to) existing.applies_to = item.applies_to;
+        if (item.category_key === 'transport' || item.slot === 'COM-TRN' || item.code === 'TRN-101') {
+          existing.applies_to = 'day_scholar';
+        } else if (item.category_key === 'hostel' || item.slot === 'COM-HST' || item.code === 'HST-101') {
+          existing.applies_to = 'hostel';
+        } else if (!existing.applies_to) {
+          existing.applies_to = item.applies_to;
+        }
         if (!existing.requirement_description) existing.requirement_description = item.requirement_description;
       }
       result.push(existing);

@@ -494,7 +494,11 @@ export const HODClearanceModal: React.FC<HODClearanceModalProps> = ({
                               {node.faculty_name || 'Designated Officer'}
                             </td>
                             <td className="px-3.5 py-2.5">
-                              {isCleared(node.dues_status) ? (
+                              {node.dues_status?.toLowerCase().includes('exempt') ? (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 inline-flex items-center gap-1">
+                                  <Check className="w-3 h-3" /> {node.dues_status}
+                                </span>
+                              ) : isCleared(node.dues_status) ? (
                                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1">
                                   <Check className="w-3 h-3" /> No Dues
                                 </span>
@@ -506,7 +510,11 @@ export const HODClearanceModal: React.FC<HODClearanceModalProps> = ({
                             </td>
                             <td className="px-3.5 py-2.5 text-right">
                               <div className="flex items-center justify-end gap-1.5">
-                                {isCleared(node.dues_status) ? (
+                                {node.dues_status?.toLowerCase().includes('exempt') ? (
+                                  <span className="text-[11px] font-medium text-slate-400 italic">
+                                    Exempted
+                                  </span>
+                                ) : isCleared(node.dues_status) ? (
                                   <>
                                     <button
                                       type="button"

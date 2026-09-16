@@ -3541,18 +3541,6 @@
       "created_at": "2026-09-14T10:24:54.716Z",
       "subject_term": "Sports & Games",
       "is_active": true
-    },
-    {
-      "id": 59,
-      "user_id": 24,
-      "employee_id": "HOD-CSE-001",
-      "full_name": "HOD CSE",
-      "email": "hod.cse@sasurie.edu",
-      "phone": "9842100000",
-      "department_id": 1,
-      "designation": "Professor & Head of Department (CSE)",
-      "is_active": true,
-      "created_at": "2026-09-16T06:41:02.261Z"
     }
   ],
   "dueRecords": [],

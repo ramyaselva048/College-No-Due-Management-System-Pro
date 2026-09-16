@@ -628,7 +628,12 @@ export function buildCertificatePrintHtml(cert: Certificate, originUrl?: string)
             </thead>
             <tbody>
               ${commonNodes.map((node) => {
-                const isExempt = node.dues_status?.toLowerCase().includes('exempted');
+                const isExempt = node.dues_status?.toLowerCase().includes('exempt');
+                const exemptLabel = node.dues_status?.includes('Day Scholar')
+                  ? 'Exempt (Day Scholar)'
+                  : node.dues_status?.includes('Hosteller')
+                  ? 'Exempt (Hosteller)'
+                  : 'Exempt';
                 return `
                 <tr>
                   <td>
@@ -637,7 +642,7 @@ export function buildCertificatePrintHtml(cert: Certificate, originUrl?: string)
                   <td>${node.faculty_name || 'Officer In-Charge'}</td>
                   <td style="text-align: center;">
                     ${isExempt 
-                      ? '<span class="status-badge-exempt">Exempt</span>' 
+                      ? `<span class="status-badge-exempt">${exemptLabel}</span>` 
                       : '<span class="status-badge-cleared">&#10003; No Dues</span>'}
                   </td>
                 </tr>

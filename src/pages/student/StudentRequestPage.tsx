@@ -550,11 +550,14 @@ export const StudentRequestPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-6">
           {commonNodes.map((com, idx) => {
             const cleared = isCleared(com.dues_status);
+            const isExempt = com.dues_status?.toLowerCase().includes('exempt');
             return (
               <div
                 key={idx}
                 className={`p-4 rounded-xl border flex flex-col justify-between transition-all ${
-                  cleared
+                  isExempt
+                    ? 'bg-blue-50/40 border-blue-200'
+                    : cleared
                     ? 'bg-emerald-50/30 border-emerald-200'
                     : 'bg-slate-50/50 border-slate-200'
                 }`}
@@ -569,13 +572,15 @@ export const StudentRequestPage: React.FC = () => {
                     </div>
                     <span
                       className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
-                        cleared
+                        isExempt
+                          ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                          : cleared
                           ? 'bg-emerald-100 text-emerald-800'
                           : 'bg-amber-100 text-amber-800 border border-amber-200'
                       }`}
                     >
                       {cleared ? <Check className="w-2.5 h-2.5 stroke-[3]" /> : <Clock className="w-2.5 h-2.5" />}
-                      {cleared ? 'No Dues' : (com.dues_status || 'Pending Review')}
+                      {com.dues_status || (cleared ? 'No Dues' : 'Pending Review')}
                     </span>
                   </div>
 

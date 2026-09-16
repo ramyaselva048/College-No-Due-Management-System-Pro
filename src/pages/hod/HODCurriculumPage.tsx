@@ -403,6 +403,7 @@ export const HODCurriculumPage: React.FC = () => {
       faculty_email: 'transport@sasurie.edu',
       requirement_description: 'Bus pass surrender or route fee payment verification',
       category_key: 'transport' as const,
+      applies_to: 'day_scholar' as const,
       icon: Bus,
       color: 'text-amber-700 bg-amber-50 border-amber-200'
     },

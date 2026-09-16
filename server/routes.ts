@@ -731,7 +731,9 @@ apiRouter.get('/student/summary', authMiddleware, requireRole(['STUDENT']), (req
     const targetSem = activeReq.semester || student.semester || (student.year === 4 ? 7 : student.year * 2 - 1);
     const reqSubs = activeReq.subjects && activeReq.subjects.length > 0 ? activeReq.subjects : defaultSubjectsForStudent(student, targetSem);
     const reqLabs = activeReq.labs && activeReq.labs.length > 0 ? activeReq.labs : defaultLabsForStudent(student, targetSem);
-    const reqCommon = activeReq.common_nodes && activeReq.common_nodes.length > 0 ? activeReq.common_nodes : (activeReq.common_nodes = defaultCommonNodesForStudent(student, true));
+    const rawCommon = activeReq.common_nodes && activeReq.common_nodes.length > 0 ? activeReq.common_nodes : (activeReq.common_nodes = defaultCommonNodesForStudent(student, true));
+    const reqCommon = syncCommonNodesExemptions(rawCommon, student, activeReq.student_type);
+    activeReq.common_nodes = reqCommon;
 
     const pendingSubs = reqSubs.filter(s => !isNodeClearedStatus(s.dues_status));
     const pendingLabsList = reqLabs.filter(l => l.name !== '-' && !isNodeClearedStatus(l.dues_status));
@@ -806,6 +808,8 @@ apiRouter.get('/student/summary', authMiddleware, requireRole(['STUDENT']), (req
       year: student.year,
       semester: student.semester || (student.year ? student.year * 2 - 1 : 1),
       section: student.section,
+      student_type: student.student_type || (isStudentHosteller(student) ? 'Hosteller' : 'Dayscholar'),
+      is_hosteller: isStudentHosteller(student),
       admission_year: student.admission_year,
       created_at: student.created_at
     },
@@ -955,6 +959,21 @@ apiRouter.post('/due-records', authMiddleware, requireRole(['STAFF', 'ADMIN']), 
   const cat = db.dueCategories.find(c => c.id === Number(category_id));
   if (!cat) return res.status(404).json({ detail: 'Due category not found' });
 
+  const isHostelStudent = isStudentHosteller(student);
+  const deptName = (dept.name || '').toLowerCase();
+  const catName = (cat.name || '').toLowerCase();
+
+  const isHostelDue = deptName.includes('hostel') || catName.includes('hostel');
+  const isTransportDue = deptName.includes('transport') || catName.includes('transport');
+
+  if (isHostelDue && !isHostelStudent) {
+    return res.status(400).json({ detail: 'Cannot assign Hostel dues to a Day Scholar student. Day Scholar students are exempt from Hostel dues.' });
+  }
+
+  if (isTransportDue && isHostelStudent) {
+    return res.status(400).json({ detail: 'Cannot assign Transport dues to a Hosteller student. Hosteller students are exempt from Transport dues.' });
+  }
+
   const parsedAmount = Number(amount) || 0;
   const cleanDesc = (description || 'Department Due').trim();
 
@@ -1092,6 +1111,17 @@ apiRouter.post(['/admin/dues/allocate-department', '/admin/dues/bulk-allocate-de
 
   // Filter target students by department, year, section, course
   let targetStudents = db.students.filter(s => s.department_id === deptId);
+
+  const deptName = (dept.name || '').toLowerCase();
+  const catName = (category.name || '').toLowerCase();
+  const isHostelDue = deptName.includes('hostel') || catName.includes('hostel');
+  const isTransportDue = deptName.includes('transport') || catName.includes('transport');
+
+  if (isHostelDue) {
+    targetStudents = targetStudents.filter(s => isStudentHosteller(s));
+  } else if (isTransportDue) {
+    targetStudents = targetStudents.filter(s => !isStudentHosteller(s));
+  }
 
   if (year !== undefined && year !== 'ALL' && year !== '') {
     targetStudents = targetStudents.filter(s => s.year === Number(year));
@@ -1433,7 +1463,71 @@ function defaultLabsForStudent(student?: any, semester?: number, initialPending:
   ];
 }
 
+export function isStudentHosteller(student?: any, studentTypeOverride?: string): boolean {
+  if (!student && !studentTypeOverride) return false;
+  const typeStr = String(studentTypeOverride || student?.student_type || (student?.is_hosteller ? 'hosteller' : 'dayscholar')).trim().toLowerCase();
+  return typeStr.includes('hostel') || Boolean(student?.is_hosteller);
+}
+
+export function syncCommonNodesExemptions(commonNodes: any[], student?: any, studentTypeOverride?: string): any[] {
+  if (!Array.isArray(commonNodes)) return commonNodes;
+  const isHostel = isStudentHosteller(student, studentTypeOverride);
+  const todayStr = new Date().toLocaleDateString('en-GB');
+
+  for (const node of commonNodes) {
+    const slotLower = String(node.slot || '').toLowerCase();
+    const catKey = String(node.category_key || '').toLowerCase();
+    const codeLower = String(node.code || '').toLowerCase();
+    const nameLower = String(node.name || node.title || '').toLowerCase();
+    const appliesTo = String(node.applies_to || '').toLowerCase();
+
+    const isHostelNode = appliesTo === 'hostel' || slotLower === 'com-hst' || catKey === 'hostel' || codeLower.includes('hst') || nameLower.includes('hostel');
+    const isTransportNode = appliesTo === 'day_scholar' || slotLower === 'com-trn' || catKey === 'transport' || codeLower.includes('trn') || nameLower.includes('transport') || nameLower.includes('bus');
+
+    if (isHostelNode) {
+      if (!isHostel) {
+        // Day scholar: Hostel clearance is not required (Exempted)
+        node.dues_status = 'Exempted (Day Scholar)';
+        if (!node.signature_date || node.signature_date === '-') node.signature_date = todayStr;
+        node.requirement_description = 'Not applicable for Day Scholar students (Exempted)';
+      } else {
+        // Hosteller: MUST clear hostel dues!
+        if (node.dues_status && node.dues_status.toLowerCase().includes('exempt')) {
+          node.dues_status = 'Pending Review';
+          node.signature_date = '-';
+        }
+        if (!node.requirement_description || node.requirement_description.includes('Not applicable')) {
+          node.requirement_description = 'Hostel room inventory handover & mess fee bill clearance';
+        }
+      }
+    }
+
+    if (isTransportNode) {
+      if (isHostel) {
+        // Hosteller: Transport clearance is not required (Exempted)
+        node.dues_status = 'Exempted (Hosteller)';
+        if (!node.signature_date || node.signature_date === '-') node.signature_date = todayStr;
+        node.requirement_description = 'Not applicable for Hosteller students (Exempted)';
+      } else {
+        // Day scholar: MUST clear transport dues!
+        if (node.dues_status && node.dues_status.toLowerCase().includes('exempt')) {
+          node.dues_status = 'Pending Review';
+          node.signature_date = '-';
+        }
+        if (!node.requirement_description || node.requirement_description.includes('Not applicable')) {
+          node.requirement_description = 'Bus pass surrender or transport route fee clearance';
+        }
+      }
+    }
+  }
+
+  return commonNodes;
+}
+
 function defaultSignatoriesForStudent(reqObj?: any, isInitial: boolean = false) {
+  const isHostel = isStudentHosteller(reqObj, reqObj?.student_type);
+  const todayStr = new Date().toLocaleDateString('en-GB');
+
   if (isInitial) {
     return {
       chief_mentor: { signed: false, name: '-', date: '-', status: 'pending' },
@@ -1441,61 +1535,84 @@ function defaultSignatoriesForStudent(reqObj?: any, isInitial: boolean = false) 
       coe: { signed: false, name: '-', date: '-', status: 'pending' },
       principal: { signed: false, name: '-', date: '-', status: 'pending' },
       library: { signed: false, name: '-', date: '-', status: 'pending' },
-      transport: { signed: false, name: '-', date: '-', status: '-' },
-      hostel: { signed: false, name: '-', date: '-', status: '-' },
+      transport: isHostel
+        ? { signed: true, name: 'Exempted (Hosteller)', date: todayStr, status: 'exempted' }
+        : { signed: false, name: '-', date: '-', status: 'pending' },
+      hostel: !isHostel
+        ? { signed: true, name: 'Exempted (Day Scholar)', date: todayStr, status: 'exempted' }
+        : { signed: false, name: '-', date: '-', status: 'pending' },
       office_accounts: { signed: false, name: '-', date: '-', status: 'pending' }
     };
   }
 
-  const todayStr = new Date().toLocaleDateString('en-GB');
   return {
     chief_mentor: { signed: true, name: 'Prof. S. Rajesh', date: todayStr, status: 'approved' },
     hod: { signed: false, name: '-', date: '-', status: 'pending' },
     coe: { signed: true, name: 'Dr. H. Sasipal CoE', date: todayStr, status: 'approved' },
     principal: { signed: false, name: '-', date: '-', status: 'pending' },
     library: { signed: true, name: 'D. Vinoth', date: todayStr, status: 'No Due' },
-    transport: { signed: false, name: '-', date: '-', status: '-' },
-    hostel: { signed: false, name: '-', date: '-', status: '-' },
+    transport: isHostel
+      ? { signed: true, name: 'Exempted (Hosteller)', date: todayStr, status: 'exempted' }
+      : { signed: false, name: '-', date: '-', status: 'pending' },
+    hostel: !isHostel
+      ? { signed: true, name: 'Exempted (Day Scholar)', date: todayStr, status: 'exempted' }
+      : { signed: false, name: '-', date: '-', status: 'pending' },
     office_accounts: { signed: true, name: 'Mrs. V. Revathi', date: todayStr, status: 'No Dues' }
   };
 }
 
 export function defaultCommonNodesForStudent(student?: any, initialPending: boolean = true): Array<{ slot: string; name: string; dues_status: string; faculty_name?: string; faculty_email?: string; faculty_id?: number; signature_date?: string; code?: string; requirement_description?: string; category_key?: string }> {
   const dateStr = initialPending ? '-' : new Date().toLocaleDateString('en-GB');
-  const studentType = String(student?.student_type || (student?.is_hosteller ? 'hosteller' : 'dayscholar')).toLowerCase();
-  const isHostel = studentType.includes('hostel') || Boolean(student?.is_hosteller);
+  const isHostel = isStudentHosteller(student);
   const defaultStatus = initialPending ? 'Pending Review' : 'No Dues';
 
   const commonFromDb = ensureDefaultCommonNodes().filter(c => c.is_active !== false);
 
   if (commonFromDb.length > 0) {
-    return commonFromDb.map((c, idx) => {
-      const isHostelNode = c.applies_to === 'hostel' || c.slot?.toLowerCase() === 'com-hst' || c.category_key === 'hostel' || c.code?.toLowerCase().includes('hst');
-      const isExempted = isHostelNode && !isHostel;
+    const rawNodes = commonFromDb.map((c, idx) => {
+      const isHostelNode = c.applies_to === 'hostel' || c.slot?.toLowerCase() === 'com-hst' || c.category_key === 'hostel' || c.code?.toLowerCase().includes('hst') || c.title?.toLowerCase().includes('hostel');
+      const isTransportNode = c.applies_to === 'day_scholar' || c.slot?.toLowerCase() === 'com-trn' || c.category_key === 'transport' || c.code?.toLowerCase().includes('trn') || c.title?.toLowerCase().includes('transport') || c.title?.toLowerCase().includes('bus');
+
+      let duesStatus = defaultStatus;
+      let sigDate = dateStr;
+      let reqDesc = c.requirement_description || 'All institutional dues cleared';
+
+      if (isHostelNode && !isHostel) {
+        duesStatus = 'Exempted (Day Scholar)';
+        sigDate = new Date().toLocaleDateString('en-GB');
+        reqDesc = 'Not applicable for Day Scholar students (Exempted)';
+      } else if (isTransportNode && isHostel) {
+        duesStatus = 'Exempted (Hosteller)';
+        sigDate = new Date().toLocaleDateString('en-GB');
+        reqDesc = 'Not applicable for Hosteller students (Exempted)';
+      }
 
       return {
         slot: c.slot || `COM-${idx + 1}`,
         name: c.title,
         code: c.code,
-        dues_status: isExempted ? 'Exempted (Day Scholar)' : defaultStatus,
+        dues_status: duesStatus,
         faculty_name: c.faculty_name || 'Officer In-Charge',
         faculty_email: c.faculty_email,
         faculty_id: c.faculty_id,
-        signature_date: isExempted ? new Date().toLocaleDateString('en-GB') : dateStr,
-        requirement_description: c.requirement_description || 'All institutional dues cleared',
-        category_key: c.category_key || c.code.toLowerCase()
+        signature_date: sigDate,
+        requirement_description: reqDesc,
+        category_key: c.category_key || c.code.toLowerCase(),
+        applies_to: c.applies_to
       };
     });
+    return syncCommonNodesExemptions(rawNodes, student);
   }
 
-  return [
-    { slot: 'COM-LIB', name: 'Central Library & Book Bank', code: 'LIB-101', dues_status: defaultStatus, faculty_name: 'Mr. D. Vinoth (Chief Librarian)', faculty_email: 'vinoth.library@sasurie.edu', faculty_id: 39, signature_date: dateStr, requirement_description: 'Return all library books & clear overdue fines', category_key: 'library' },
-    { slot: 'COM-ACC', name: 'Accounts & College Finance Office', code: 'ACC-101', dues_status: defaultStatus, faculty_name: 'Mrs. V. Revathi, M.Com. (Accounts Officer)', faculty_email: 'accounts@sasurie.edu', faculty_id: 8, signature_date: dateStr, requirement_description: 'Tuition & examination fees clearance', category_key: 'accounts' },
-    { slot: 'COM-TRN', name: 'College Bus & Transport Section', code: 'TRN-101', dues_status: defaultStatus, faculty_name: 'Mr. K. Murugesan (Transport In-Charge)', faculty_email: 'transport@sasurie.edu', faculty_id: 10, signature_date: dateStr, requirement_description: 'Bus pass surrender or transport route fee clearance', category_key: 'transport' },
-    { slot: 'COM-HST', name: 'Campus Hostel & Mess Section', code: 'HST-101', dues_status: isHostel ? defaultStatus : 'Exempted (Day Scholar)', faculty_name: 'Mr. K. Manoharan (Campus Hostel Warden)', faculty_email: 'hostel@sasurie.edu', faculty_id: 9, signature_date: isHostel ? dateStr : new Date().toLocaleDateString('en-GB'), requirement_description: 'Hostel room inventory & mess fee clearance', category_key: 'hostel' },
-    { slot: 'COM-PED', name: 'Physical Education & Sports Department', code: 'PED-101', dues_status: defaultStatus, faculty_name: 'Prof. P. Ravichandran (Physical Director)', faculty_email: 'sports@sasurie.edu', faculty_id: 58, signature_date: dateStr, requirement_description: 'Sports equipment & kit clearance', category_key: 'sports' },
-    { slot: 'COM-COE', name: 'Office of Controller of Examinations (CoE)', code: 'COE-101', dues_status: defaultStatus, faculty_name: 'Dr. H. Sasipal (Controller of Examinations)', faculty_email: 'coe@sasurie.edu', faculty_id: 5, signature_date: dateStr, requirement_description: 'Exam registration confirmation', category_key: 'exam_cell' }
+  const defaultList = [
+    { slot: 'COM-LIB', name: 'Central Library & Book Bank', code: 'LIB-101', dues_status: defaultStatus, faculty_name: 'Mr. D. Vinoth (Chief Librarian)', faculty_email: 'vinoth.library@sasurie.edu', faculty_id: 39, signature_date: dateStr, requirement_description: 'Return all library books & clear overdue fines', category_key: 'library', applies_to: 'all' },
+    { slot: 'COM-ACC', name: 'Accounts & College Finance Office', code: 'ACC-101', dues_status: defaultStatus, faculty_name: 'Mrs. V. Revathi, M.Com. (Accounts Officer)', faculty_email: 'accounts@sasurie.edu', faculty_id: 8, signature_date: dateStr, requirement_description: 'Tuition & examination fees clearance', category_key: 'accounts', applies_to: 'all' },
+    { slot: 'COM-TRN', name: 'College Bus & Transport Section', code: 'TRN-101', dues_status: isHostel ? 'Exempted (Hosteller)' : defaultStatus, faculty_name: 'Mr. K. Murugesan (Transport In-Charge)', faculty_email: 'transport@sasurie.edu', faculty_id: 10, signature_date: isHostel ? new Date().toLocaleDateString('en-GB') : dateStr, requirement_description: isHostel ? 'Not applicable for Hosteller students (Exempted)' : 'Bus pass surrender or transport route fee clearance', category_key: 'transport', applies_to: 'day_scholar' },
+    { slot: 'COM-HST', name: 'Campus Hostel & Mess Section', code: 'HST-101', dues_status: isHostel ? defaultStatus : 'Exempted (Day Scholar)', faculty_name: 'Mr. K. Manoharan (Campus Hostel Warden)', faculty_email: 'hostel@sasurie.edu', faculty_id: 9, signature_date: isHostel ? dateStr : new Date().toLocaleDateString('en-GB'), requirement_description: isHostel ? 'Hostel room inventory & mess fee clearance' : 'Not applicable for Day Scholar students (Exempted)', category_key: 'hostel', applies_to: 'hostel' },
+    { slot: 'COM-PED', name: 'Physical Education & Sports Department', code: 'PED-101', dues_status: defaultStatus, faculty_name: 'Prof. P. Ravichandran (Physical Director)', faculty_email: 'sports@sasurie.edu', faculty_id: 58, signature_date: dateStr, requirement_description: 'Sports equipment & kit clearance', category_key: 'sports', applies_to: 'all' },
+    { slot: 'COM-COE', name: 'Office of Controller of Examinations (CoE)', code: 'COE-101', dues_status: defaultStatus, faculty_name: 'Dr. H. Sasipal (Controller of Examinations)', faculty_email: 'coe@sasurie.edu', faculty_id: 5, signature_date: dateStr, requirement_description: 'Exam registration confirmation', category_key: 'exam_cell', applies_to: 'all' }
   ];
+  return syncCommonNodesExemptions(defaultList, student);
 }
 
 export function isNodeClearedStatus(status?: string): boolean {
@@ -1546,9 +1663,13 @@ export function getEnrichedCertificateData(cert: CertificateRecord) {
     : defaultLabsForStudent(st, targetSem, false);
 
   // Populate common nodes
-  const rawCommon = (reqRecord?.common_nodes && reqRecord.common_nodes.length > 0)
-    ? reqRecord.common_nodes
-    : defaultCommonNodesForStudent(st, false);
+  const rawCommon = syncCommonNodesExemptions(
+    (reqRecord?.common_nodes && reqRecord.common_nodes.length > 0)
+      ? reqRecord.common_nodes
+      : defaultCommonNodesForStudent(st, false),
+    st,
+    reqRecord?.student_type
+  );
 
   // If certificate is valid, ensure all statuses are certified No Dues / Cleared
   const subjects = rawSubjects.map((s, idx) => ({
@@ -1572,7 +1693,7 @@ export function getEnrichedCertificateData(cert: CertificateRecord) {
   }));
 
   const common_nodes = rawCommon.map((c, idx) => {
-    const isExempt = c.dues_status?.toLowerCase().includes('exempted');
+    const isExempt = c.dues_status?.toLowerCase().includes('exempt');
     return {
       slot: c.slot || `COM-${idx + 1}`,
       name: c.name,
@@ -1798,9 +1919,21 @@ apiRouter.post('/no-due-requests', authMiddleware, requireRole(['STUDENT']), (re
     undertaking_status: undertakingStatus,
     subjects: req.body.subjects && req.body.subjects.length > 0 ? req.body.subjects : defaultSubjectsForStudent(student, targetSemester, true),
     labs: req.body.labs && req.body.labs.length > 0 ? req.body.labs : defaultLabsForStudent(student, targetSemester, true),
-    common_nodes: req.body.common_nodes && req.body.common_nodes.length > 0 ? req.body.common_nodes : defaultCommonNodesForStudent(student, true),
-    signatories: req.body.signatories || defaultSignatoriesForStudent(null, true)
+    common_nodes: syncCommonNodesExemptions(
+      req.body.common_nodes && req.body.common_nodes.length > 0 ? req.body.common_nodes : defaultCommonNodesForStudent(student, true),
+      student,
+      req.body.student_type || student.student_type
+    ),
+    signatories: defaultSignatoriesForStudent({
+      student_type: req.body.student_type || student.student_type,
+      is_hosteller: isStudentHosteller(student, req.body.student_type)
+    }, true)
   };
+  if (req.body.student_type) {
+    const isH = isStudentHosteller(student, req.body.student_type);
+    student.student_type = isH ? 'Hosteller' : 'Dayscholar';
+    (student as any).is_hosteller = isH;
+  }
   db.noDueRequests.push(newReq);
 
   // Notify allocated staff members for each subject and lab
@@ -1913,7 +2046,11 @@ apiRouter.get('/no-due-requests/my', authMiddleware, requireRole(['STUDENT']), (
       undertaking_status: r.undertaking_status || ((Number(r.attendance_percentage ?? student.attendance_percentage ?? 98) >= 80) ? 'Exempted' : 'Submitted'),
       subjects: r.subjects && r.subjects.length > 0 ? r.subjects : defaultSubjectsForStudent(student),
       labs: r.labs && r.labs.length > 0 ? r.labs : defaultLabsForStudent(student),
-      common_nodes: r.common_nodes && r.common_nodes.length > 0 ? r.common_nodes : defaultCommonNodesForStudent(student, true),
+      common_nodes: syncCommonNodesExemptions(
+        r.common_nodes && r.common_nodes.length > 0 ? r.common_nodes : defaultCommonNodesForStudent(student, true),
+        student,
+        r.student_type
+      ),
       signatories: r.signatories || defaultSignatoriesForStudent(r)
     };
   });
@@ -1992,7 +2129,11 @@ apiRouter.get(['/no-due-requests', '/no-due-requests/all'], authMiddleware, requ
       undertaking_status: r.undertaking_status || ((Number(r.attendance_percentage ?? st?.attendance_percentage ?? 98) >= 80) ? 'Exempted' : 'Submitted'),
       subjects: r.subjects && r.subjects.length > 0 ? r.subjects : defaultSubjectsForStudent(st, r.semester),
       labs: r.labs && r.labs.length > 0 ? r.labs : defaultLabsForStudent(st, r.semester),
-      common_nodes: r.common_nodes && r.common_nodes.length > 0 ? r.common_nodes : defaultCommonNodesForStudent(st, true),
+      common_nodes: syncCommonNodesExemptions(
+        r.common_nodes && r.common_nodes.length > 0 ? r.common_nodes : defaultCommonNodesForStudent(st, true),
+        st,
+        r.student_type
+      ),
       signatories: r.signatories || defaultSignatoriesForStudent(r)
     };
   });
@@ -2050,7 +2191,8 @@ apiRouter.patch('/no-due-requests/:id', authMiddleware, requireRole(['ADMIN']), 
   if (status === 'approved') {
     const subjects = r.subjects && r.subjects.length > 0 ? r.subjects : defaultSubjectsForStudent(st, r.semester, true);
     const labs = r.labs && r.labs.length > 0 ? r.labs : defaultLabsForStudent(st, r.semester, true);
-    const common = r.common_nodes && r.common_nodes.length > 0 ? r.common_nodes : defaultCommonNodesForStudent(st, true);
+    const rawCommon = r.common_nodes && r.common_nodes.length > 0 ? r.common_nodes : defaultCommonNodesForStudent(st, true);
+    const common = syncCommonNodesExemptions(rawCommon, st, r.student_type);
 
     const pendingSubjects = subjects.filter((s: any) => !isNodeClearedStatus(s.dues_status));
     const pendingLabs = labs.filter((l: any) => l.name !== '-' && !isNodeClearedStatus(l.dues_status));
@@ -5307,7 +5449,8 @@ apiRouter.get('/hod/requests', authMiddleware, requireRole(['HOD', 'ADMIN']), (r
     const course = student ? db.courses.find(c => c.id === student.course_id) : null;
     const subjects = r.subjects || defaultSubjectsForStudent(student, r.semester);
     const labs = r.labs || defaultLabsForStudent(student, r.semester);
-    const common_nodes = r.common_nodes && r.common_nodes.length > 0 ? r.common_nodes : defaultCommonNodesForStudent(student, true);
+    const rawCommon = r.common_nodes && r.common_nodes.length > 0 ? r.common_nodes : defaultCommonNodesForStudent(student, true);
+    const common_nodes = syncCommonNodesExemptions(rawCommon, student, r.student_type);
     const signatories = r.signatories || defaultSignatoriesForStudent(r);
 
     const pendingSubjects = subjects.filter((s: any) => !isNodeClearedStatus(s.dues_status));
@@ -5508,9 +5651,10 @@ apiRouter.get('/staff/allocated-clearance-requests', authMiddleware, requireRole
     }
 
     // Common institutional nodes: ONLY cleared when allocated officer accepts
-    const commonList = (r.common_nodes && Array.isArray(r.common_nodes) && r.common_nodes.length > 0)
+    const rawCommonList = (r.common_nodes && Array.isArray(r.common_nodes) && r.common_nodes.length > 0)
       ? r.common_nodes
       : (r.common_nodes = defaultCommonNodesForStudent(student, true));
+    const commonList = syncCommonNodesExemptions(rawCommonList, student, r.student_type);
 
     for (const com of commonList) {
       const isAssigned = (req.user!.role === 'ADMIN') ||

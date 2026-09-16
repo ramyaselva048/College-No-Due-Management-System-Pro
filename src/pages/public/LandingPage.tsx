@@ -222,10 +222,7 @@ export const LandingPage: React.FC = () => {
                 <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-4">
                   <Building2 className="w-6 h-6" />
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <h4 className="font-display font-bold text-base text-slate-900 dark:text-white">HOD Portal</h4>
-                  <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300">Key Role</span>
-                </div>
+                <h4 className="font-display font-bold text-base text-slate-900 dark:text-white">HOD Portal</h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
                   Head of Department controls. Allocate semester-wise clearance nodes and assign faculty in-charge for student dues clearance.
                 </p>
