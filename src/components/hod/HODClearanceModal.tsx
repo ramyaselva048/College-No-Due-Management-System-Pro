@@ -1,0 +1,820 @@
+import React, { useState, useEffect } from 'react';
+import {
+  X,
+  ArrowLeft,
+  CheckCircle2,
+  Clock,
+  ShieldCheck,
+  Check,
+  AlertTriangle,
+  BookOpen,
+  UserCheck,
+  Building2
+} from 'lucide-react';
+import api from '../../services/api';
+
+interface HODClearanceModalProps {
+  request: any | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onUpdated: () => void;
+}
+
+export const HODClearanceModal: React.FC<HODClearanceModalProps> = ({
+  request,
+  isOpen,
+  onClose,
+  onUpdated
+}) => {
+  const [currentRequest, setCurrentRequest] = useState<any>(request);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionFeedback, setActionFeedback] = useState<string | null>(null);
+  const [hodRemarks, setHodRemarks] = useState(
+    'All departmental theory subjects, laboratory records, and equipment clearances verified and approved.'
+  );
+
+  // In-app modal for Marking Due or Resetting Node (replaces blocked window.prompt)
+  const [dueModalTarget, setDueModalTarget] = useState<{
+    slot: string;
+    name: string;
+    code?: string;
+    currentStatus: string;
+  } | null>(null);
+  const [dueAmount, setDueAmount] = useState<number>(250);
+  const [dueReason, setDueReason] = useState<string>('Pending laboratory manual / equipment dues');
+
+  useEffect(() => {
+    setCurrentRequest(request);
+    setActionFeedback(null);
+    if (request?.signatories?.hod?.remarks) {
+      setHodRemarks(request.signatories.hod.remarks);
+    }
+  }, [request]);
+
+  // Handle ESC key to exit modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        if (dueModalTarget) {
+          setDueModalTarget(null);
+        } else {
+          onClose();
+        }
+      }
+    };
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen, onClose, dueModalTarget]);
+
+  if (!isOpen || !currentRequest) return null;
+
+  const handleSignOffHOD = async () => {
+    try {
+      setActionLoading(true);
+      const res = await api.post(`/hod/requests/${currentRequest.id}/sign-off`, {
+        remarks: hodRemarks
+      });
+      setActionFeedback('Official HOD Endorsement has been digitally signed and sealed.');
+      setCurrentRequest(res.data.request);
+      onUpdated();
+    } catch (err: any) {
+      setActionFeedback(err.response?.data?.detail || 'Failed to sign off endorsement.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleClearSubjectDue = async (slot: string) => {
+    try {
+      setActionLoading(true);
+      const res = await api.post(`/hod/requests/${currentRequest.id}/clear-subject`, {
+        slot
+      });
+      setActionFeedback(`Clearance granted for ${slot}.`);
+      setCurrentRequest(res.data.request);
+      onUpdated();
+    } catch (err: any) {
+      setActionFeedback(err.response?.data?.detail || 'Failed to clear subject due.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const openMarkDueModal = (slot: string, name: string, code?: string, currentStatus?: string) => {
+    setDueModalTarget({
+      slot,
+      name,
+      code,
+      currentStatus: currentStatus || 'Cleared'
+    });
+    setDueAmount(250);
+    setDueReason(`Pending ${slot} Due / Breakage fee`);
+  };
+
+  const handleResetSubject = async (slot: string) => {
+    try {
+      setActionLoading(true);
+      const res = await api.post(`/hod/requests/${currentRequest.id}/reset-subject`, {
+        slot,
+        action: 'reset'
+      });
+      setActionFeedback(`Clearance status successfully reset to Pending Review for ${slot}.`);
+      setCurrentRequest(res.data.request);
+      setDueModalTarget(null);
+      onUpdated();
+    } catch (err: any) {
+      setActionFeedback(err.response?.data?.detail || 'Failed to reset status.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleConfirmMarkDue = async () => {
+    if (!dueModalTarget) return;
+    try {
+      setActionLoading(true);
+      const res = await api.post(`/hod/requests/${currentRequest.id}/mark-subject-due`, {
+        slot: dueModalTarget.slot,
+        amount: Number(dueAmount) || 0,
+        description: dueReason.trim() || `Pending ${dueModalTarget.slot} Due: ₹${dueAmount}`
+      });
+      setActionFeedback(`Due registered for ${dueModalTarget.slot} (${Number(dueAmount) > 0 ? `₹${dueAmount}` : 'Pending Due'}).`);
+      setCurrentRequest(res.data.request);
+      setDueModalTarget(null);
+      onUpdated();
+    } catch (err: any) {
+      setActionFeedback(err.response?.data?.detail || 'Failed to mark due.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const isCleared = (status?: string) => {
+    if (!status) return false;
+    const s = status.trim().toLowerCase();
+    if (s === '-' || s === 'pending review' || s === 'pending verification' || s === 'pending' || s.startsWith('due:') || s.includes('unpaid')) return false;
+    return s === 'no dues' || s === 'no due' || s === 'cleared' || s === 'waived' || s.startsWith('exempted') || s === 'verified';
+  };
+
+  const pendingSubjects = (currentRequest.subjects || []).filter((s: any) => !isCleared(s.dues_status));
+  const pendingLabs = (currentRequest.labs || []).filter((l: any) => l.name !== '-' && !isCleared(l.dues_status));
+  const pendingCommon = (currentRequest.common_nodes || []).filter((c: any) => !isCleared(c.dues_status));
+
+  const totalPendingAcademic = pendingSubjects.length + pendingLabs.length;
+  const totalPendingNodes = totalPendingAcademic + pendingCommon.length;
+  const canHODEndorse = totalPendingAcademic === 0;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto"
+      onClick={onClose}
+      id="hod-clearance-modal-overlay"
+    >
+      <div
+        className="bg-white rounded-2xl max-w-4xl w-full shadow-2xl border border-slate-200 flex flex-col max-h-[92vh] my-auto animate-in fade-in zoom-in-95"
+        onClick={(e) => e.stopPropagation()}
+        id="hod-clearance-modal-card"
+      >
+        {/* Sticky Header with prominent EXIT buttons */}
+        <div className="p-4 sm:p-5 border-b border-slate-200 bg-white rounded-t-2xl flex flex-wrap items-center justify-between gap-3 sticky top-0 z-20 shadow-2xs">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors inline-flex items-center gap-1.5 text-xs font-bold shadow-2xs cursor-pointer"
+              title="Exit Clearance Form (Esc)"
+              id="btn-exit-clearance-top"
+            >
+              <ArrowLeft className="w-4 h-4 text-slate-600" />
+              <span>Exit Form</span>
+            </button>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-display font-bold text-sm sm:text-base text-slate-900">
+                  {currentRequest.student_name}
+                </h3>
+                <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-900 border border-amber-200">
+                  {currentRequest.student_reg_no}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500">
+                Year {currentRequest.year}, Semester {currentRequest.semester} • Section {currentRequest.section || 'A'} ({currentRequest.course_name || 'Engineering'})
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* Quick Exit X button */}
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+              title="Close modal (Esc)"
+              id="btn-close-x"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Scrollable Body Content */}
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-6">
+          {actionFeedback && (
+            <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 text-xs font-semibold flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>{actionFeedback}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActionFeedback(null)}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
+          <div className="space-y-5">
+            {/* Theory Subjects Section */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wide flex items-center gap-1.5">
+                    <BookOpen className="w-4 h-4 text-amber-600" />
+                    Allocated Theory Subjects (Sub 1 - Sub 6)
+                  </h4>
+                  <span className="text-[11px] text-slate-400">
+                    Allocated by HOD • Cleared by Assigned Faculty
+                  </span>
+                </div>
+
+                <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-600 uppercase">
+                      <tr>
+                        <th className="px-3.5 py-2.5">Slot</th>
+                        <th className="px-3.5 py-2.5">Subject & Code</th>
+                        <th className="px-3.5 py-2.5">In-Charge Faculty</th>
+                        <th className="px-3.5 py-2.5">Dues Status</th>
+                        <th className="px-3.5 py-2.5 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {(currentRequest.subjects || []).map((sub: any, idx: number) => (
+                        <tr key={idx} className="hover:bg-slate-50/60">
+                          <td className="px-3.5 py-2.5 font-mono font-bold text-slate-700">
+                            {sub.slot}
+                          </td>
+                          <td className="px-3.5 py-2.5">
+                            <div className="font-semibold text-slate-900">
+                              {sub.subject_name || sub.title || sub.name}
+                            </div>
+                            <div className="text-[10px] text-slate-400 font-mono">{sub.code}</div>
+                          </td>
+                          <td className="px-3.5 py-2.5 text-slate-600">
+                            {sub.faculty_name || 'Staff In-Charge'}
+                          </td>
+                          <td className="px-3.5 py-2.5">
+                            {isCleared(sub.dues_status) ? (
+                              <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1">
+                                <Check className="w-3 h-3 text-emerald-600" /> Accepted & Cleared
+                              </span>
+                            ) : (
+                              <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 inline-flex items-center gap-1">
+                                <Clock className="w-3 h-3 text-amber-600" /> Pending Staff Acceptance
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-3.5 py-2.5 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              {isCleared(sub.dues_status) ? (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => openMarkDueModal(sub.slot, sub.subject_name || sub.title || sub.name, sub.code, sub.dues_status)}
+                                    disabled={actionLoading}
+                                    className="px-2.5 py-1 text-[11px] font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg cursor-pointer transition-colors shadow-2xs inline-flex items-center gap-1"
+                                    title="Mark fine or due for this subject"
+                                    id={`btn-mark-due-${sub.slot}`}
+                                  >
+                                    Mark Due
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleResetSubject(sub.slot)}
+                                    disabled={actionLoading}
+                                    className="px-2.5 py-1 text-[11px] font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg cursor-pointer transition-colors"
+                                    title="Reset status back to Pending Review"
+                                    id={`btn-reset-subject-${sub.slot}`}
+                                  >
+                                    Reset
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleClearSubjectDue(sub.slot)}
+                                    disabled={actionLoading}
+                                    className="px-2.5 py-1 text-[11px] font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 rounded-lg border border-emerald-300 cursor-pointer shadow-2xs"
+                                    id={`btn-clear-due-${sub.slot}`}
+                                  >
+                                    Clear Due
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => openMarkDueModal(sub.slot, sub.subject_name || sub.title || sub.name, sub.code, sub.dues_status)}
+                                    disabled={actionLoading}
+                                    className="px-2 py-1 text-[11px] text-rose-600 hover:bg-rose-50 rounded-lg font-semibold cursor-pointer"
+                                  >
+                                    Edit Due
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Practical Labs Section */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wide flex items-center gap-1.5">
+                    <UserCheck className="w-4 h-4 text-emerald-600" />
+                    Allocated Practical Labs (Lab 1 - Lab 4)
+                  </h4>
+                  <span className="text-[11px] text-slate-400">
+                    Allocated by HOD • Cleared by Lab In-Charge
+                  </span>
+                </div>
+
+                <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-600 uppercase">
+                      <tr>
+                        <th className="px-3.5 py-2.5">Slot</th>
+                        <th className="px-3.5 py-2.5">Practical Course & Code</th>
+                        <th className="px-3.5 py-2.5">Lab In-Charge</th>
+                        <th className="px-3.5 py-2.5">Dues Status</th>
+                        <th className="px-3.5 py-2.5 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {(currentRequest.labs || []).map((lab: any, idx: number) => (
+                        <tr key={idx} className="hover:bg-slate-50/60">
+                          <td className="px-3.5 py-2.5 font-mono font-bold text-slate-700">
+                            {lab.slot}
+                          </td>
+                          <td className="px-3.5 py-2.5">
+                            <div className="font-semibold text-slate-900">
+                              {lab.lab_name || lab.title || lab.name}
+                            </div>
+                            <div className="text-[10px] text-slate-400 font-mono">{lab.code}</div>
+                          </td>
+                          <td className="px-3.5 py-2.5 text-slate-600">
+                            {lab.faculty_name || 'Lab Instructor'}
+                          </td>
+                          <td className="px-3.5 py-2.5">
+                            {isCleared(lab.dues_status) ? (
+                              <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1">
+                                <Check className="w-3 h-3 text-emerald-600" /> Accepted & Cleared
+                              </span>
+                            ) : (
+                              <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 inline-flex items-center gap-1">
+                                <Clock className="w-3 h-3 text-amber-600" /> Pending Lab Staff
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-3.5 py-2.5 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              {isCleared(lab.dues_status) ? (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => openMarkDueModal(lab.slot, lab.lab_name || lab.title || lab.name, lab.code, lab.dues_status)}
+                                    disabled={actionLoading}
+                                    className="px-2.5 py-1 text-[11px] font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg cursor-pointer transition-colors shadow-2xs inline-flex items-center gap-1"
+                                    title="Mark fine or due for this laboratory"
+                                    id={`btn-mark-due-${lab.slot}`}
+                                  >
+                                    Mark Due
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleResetSubject(lab.slot)}
+                                    disabled={actionLoading}
+                                    className="px-2.5 py-1 text-[11px] font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg cursor-pointer transition-colors"
+                                    title="Reset status back to Pending Review"
+                                    id={`btn-reset-lab-${lab.slot}`}
+                                  >
+                                    Reset
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleClearSubjectDue(lab.slot)}
+                                    disabled={actionLoading}
+                                    className="px-2.5 py-1 text-[11px] font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 rounded-lg border border-emerald-300 cursor-pointer shadow-2xs"
+                                    id={`btn-clear-due-${lab.slot}`}
+                                  >
+                                    Clear Due
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => openMarkDueModal(lab.slot, lab.lab_name || lab.title || lab.name, lab.code, lab.dues_status)}
+                                    disabled={actionLoading}
+                                    className="px-2 py-1 text-[11px] text-rose-600 hover:bg-rose-50 rounded-lg font-semibold cursor-pointer"
+                                  >
+                                    Edit Due
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Common Institutional Dues Section (Library, Accounts, Transport, Hostel, Sports, Exam Cell) */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-indigo-600" />
+                    <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
+                      Common Institutional Clearance Nodes (Library, Accounts, Transport...)
+                    </h4>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                    Universal Across All Students
+                  </span>
+                </div>
+
+                <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-600 uppercase">
+                      <tr>
+                        <th className="px-3.5 py-2.5">Slot</th>
+                        <th className="px-3.5 py-2.5">Institutional Section & Requirement</th>
+                        <th className="px-3.5 py-2.5">Officer In-Charge</th>
+                        <th className="px-3.5 py-2.5">Dues Status</th>
+                        <th className="px-3.5 py-2.5 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {(currentRequest.common_nodes && currentRequest.common_nodes.length > 0) ? (
+                        currentRequest.common_nodes.map((node: any, idx: number) => (
+                          <tr key={idx} className="hover:bg-slate-50/60">
+                            <td className="px-3.5 py-2.5 font-mono font-bold text-indigo-700">
+                              {node.slot}
+                            </td>
+                            <td className="px-3.5 py-2.5">
+                              <div className="font-semibold text-slate-900">
+                                {node.name || node.title}
+                              </div>
+                              <div className="text-[10px] text-slate-500">
+                                {node.requirement || node.requirement_description || 'Zero institutional dues'}
+                              </div>
+                            </td>
+                            <td className="px-3.5 py-2.5 text-slate-600">
+                              {node.faculty_name || 'Designated Officer'}
+                            </td>
+                            <td className="px-3.5 py-2.5">
+                              {isCleared(node.dues_status) ? (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1">
+                                  <Check className="w-3 h-3" /> No Dues
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                                  {node.dues_status || 'Pending Dues'}
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-3.5 py-2.5 text-right">
+                              <div className="flex items-center justify-end gap-1.5">
+                                {isCleared(node.dues_status) ? (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => openMarkDueModal(node.slot, node.name || node.title, node.code, node.dues_status)}
+                                      disabled={actionLoading}
+                                      className="px-2.5 py-1 text-[11px] font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg cursor-pointer transition-colors shadow-2xs inline-flex items-center gap-1"
+                                      title="Mark fine or due for this node"
+                                      id={`btn-mark-due-${node.slot}`}
+                                    >
+                                      Mark Due
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleResetSubject(node.slot)}
+                                      disabled={actionLoading}
+                                      className="px-2.5 py-1 text-[11px] font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg cursor-pointer transition-colors"
+                                      title="Reset status back to Pending Review"
+                                      id={`btn-reset-node-${node.slot}`}
+                                    >
+                                      Reset
+                                    </button>
+                                  </>
+                                ) : (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleClearSubjectDue(node.slot)}
+                                      disabled={actionLoading}
+                                      className="px-2.5 py-1 text-[11px] font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 rounded-lg border border-emerald-300 cursor-pointer shadow-2xs"
+                                      id={`btn-clear-due-${node.slot}`}
+                                    >
+                                      Clear Due
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => openMarkDueModal(node.slot, node.name || node.title, node.code, node.dues_status)}
+                                      disabled={actionLoading}
+                                      className="px-2 py-1 text-[11px] text-rose-600 hover:bg-rose-50 rounded-lg font-semibold cursor-pointer"
+                                    >
+                                      Edit Due
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={5} className="px-3.5 py-4 text-center text-xs text-slate-400">
+                            No common institutional nodes attached to this request yet. Standard defaults apply.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Head of Department Digital Endorsement Card */}
+              <div className="bg-linear-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-5 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <ShieldCheck className="w-5 h-5 text-amber-700" />
+                    <div>
+                      <h4 className="text-xs font-bold text-amber-950 uppercase tracking-wide">
+                        Head of Department (HOD) Official Endorsement
+                      </h4>
+                      <p className="text-[11px] text-amber-800/80">
+                        Institutional sign-off certifying department clearance for Anna University / Controller of Examinations
+                      </p>
+                    </div>
+                  </div>
+
+                  {currentRequest.hod_endorsed ? (
+                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 inline-flex items-center gap-1.5 shadow-2xs">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      Endorsed ({currentRequest.signatories?.hod?.date || 'Signed'})
+                    </span>
+                  ) : (
+                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-200 text-amber-900 border border-amber-300">
+                      Awaiting HOD Signature
+                    </span>
+                  )}
+                </div>
+
+                <div className="mt-3">
+                  <label className="block text-[11px] font-bold text-amber-900 mb-1">
+                    Department Recommendation / Remarks:
+                  </label>
+                  <input
+                    type="text"
+                    value={hodRemarks}
+                    onChange={(e) => setHodRemarks(e.target.value)}
+                    disabled={currentRequest.hod_endorsed}
+                    className="w-full text-xs p-2.5 border border-amber-300 rounded-xl bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                  />
+                </div>
+
+                {!currentRequest.hod_endorsed && !canHODEndorse && (
+                  <div className="mt-3.5 p-3 rounded-xl bg-amber-100/80 border border-amber-300 text-amber-950 text-xs flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0" />
+                    <span>
+                      <strong>Awaiting Faculty Clearances:</strong> {totalPendingAcademic} departmental subject/lab node(s) remain unverified. Each allocated faculty member must verify and clear their subject before HOD endorsement can be signed.
+                    </span>
+                  </div>
+                )}
+
+                {!currentRequest.hod_endorsed && canHODEndorse && (
+                  <div className="mt-3.5 p-3 rounded-xl bg-emerald-100/80 border border-emerald-300 text-emerald-950 text-xs flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
+                    <span>
+                      <strong>All Department Subjects Cleared:</strong> Every allocated subject and lab has been cleared by faculty. Ready for Head of Department (HOD) digital endorsement.
+                    </span>
+                  </div>
+                )}
+
+                {!currentRequest.hod_endorsed && (
+                  <div className="mt-3.5 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={handleSignOffHOD}
+                      disabled={actionLoading || !canHODEndorse}
+                      className="px-5 py-2.5 text-xs font-bold rounded-xl transition-colors shadow-xs inline-flex items-center gap-1.5 text-white bg-amber-600 hover:bg-amber-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      id="btn-hod-sign-endorsement"
+                    >
+                      <Check className="w-4 h-4" />
+                      {actionLoading
+                        ? 'Signing Endorsement...'
+                        : !canHODEndorse
+                        ? `Awaiting Faculty Clearances (${totalPendingAcademic} Pending)`
+                        : 'Digitally Endorse & Forward to Admin'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+        </div>
+
+        {/* Sticky Footer with Clear Exit & Action Controls */}
+        <div className="p-3.5 sm:p-4 bg-slate-50 border-t border-slate-200 rounded-b-2xl flex items-center justify-between sticky bottom-0 z-20">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 rounded-xl transition-colors shadow-2xs inline-flex items-center gap-1.5 cursor-pointer"
+            id="btn-exit-clearance-bottom"
+          >
+            <ArrowLeft className="w-3.5 h-3.5 text-slate-600" />
+            <span>← Exit Clearance Form</span>
+          </button>
+
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-slate-400 hidden sm:inline">
+              Press <kbd className="px-1.5 py-0.5 bg-slate-200 rounded text-slate-600 font-mono text-[10px]">Esc</kbd> or click outside to exit
+            </span>
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-xs font-bold text-white bg-slate-800 hover:bg-slate-900 rounded-xl transition-colors shadow-xs cursor-pointer"
+            >
+              Done & Return
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Interactive Mark Due & Reset Modal Dialog (replaces blocked window.prompt) */}
+      {dueModalTarget && (
+        <div
+          className="fixed inset-0 z-70 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4"
+          onClick={() => setDueModalTarget(null)}
+          id="dialog-mark-due-overlay"
+        >
+          <div
+            className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 space-y-4"
+            onClick={(e) => e.stopPropagation()}
+            id="dialog-mark-due-card"
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                  Subject / Lab Action
+                </span>
+                <h3 className="font-display font-bold text-base text-slate-900 mt-1">
+                  Mark Due or Reset Clearance
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Student: <strong className="text-slate-800">{currentRequest.student_name}</strong> ({currentRequest.student_reg_no})
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDueModalTarget(null)}
+                className="text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Target Node Details */}
+            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1 text-xs">
+              <div className="font-bold text-slate-900 flex items-center justify-between">
+                <span>{dueModalTarget.slot}: {dueModalTarget.name}</span>
+                {dueModalTarget.code && (
+                  <span className="font-mono text-[11px] font-semibold text-slate-600 bg-white px-2 py-0.5 rounded border border-slate-200">
+                    {dueModalTarget.code}
+                  </span>
+                )}
+              </div>
+              <div className="text-[11px] text-slate-500 flex items-center gap-1.5 pt-0.5">
+                <span>Current status:</span>
+                <span className="font-semibold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px]">
+                  {dueModalTarget.currentStatus}
+                </span>
+              </div>
+            </div>
+
+            {/* Due Amount input */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Outstanding Due / Penalty Amount (₹)
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="10"
+                  value={dueAmount}
+                  onChange={(e) => setDueAmount(Math.max(0, Number(e.target.value)))}
+                  placeholder="250"
+                  className="w-full pl-8 pr-3 py-2 text-sm font-semibold border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
+                  id="input-due-amount"
+                />
+              </div>
+
+              {/* Quick Preset Buttons */}
+              <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                <span className="text-[10px] text-slate-400 font-medium">Presets:</span>
+                {[0, 100, 200, 250, 500, 1000].map((amt) => (
+                  <button
+                    key={amt}
+                    type="button"
+                    onClick={() => setDueAmount(amt)}
+                    className={`px-2 py-0.5 text-[11px] font-semibold rounded-md border transition-colors cursor-pointer ${
+                      dueAmount === amt
+                        ? 'bg-rose-600 text-white border-rose-600 shadow-2xs'
+                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+                    }`}
+                  >
+                    ₹{amt}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Reason / Remarks */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Reason / Breakdown Remarks
+              </label>
+              <input
+                type="text"
+                value={dueReason}
+                onChange={(e) => setDueReason(e.target.value)}
+                placeholder="e.g. Broken lab glassware, overdue library book, assignment pending"
+                className="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
+                id="input-due-reason"
+              />
+            </div>
+
+            {/* Dialog Footer Actions */}
+            <div className="pt-2 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={() => handleResetSubject(dueModalTarget.slot)}
+                disabled={actionLoading}
+                className="px-3 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors inline-flex items-center justify-center gap-1.5 cursor-pointer"
+                title="Reset status back to Pending Review without applying a fine"
+                id="btn-dialog-reset-pending"
+              >
+                <Clock className="w-3.5 h-3.5 text-slate-500" />
+                Reset to Pending (₹0)
+              </button>
+
+              <div className="flex items-center gap-2 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setDueModalTarget(null)}
+                  className="px-3 py-2 text-xs font-bold text-slate-500 hover:text-slate-800 rounded-xl cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmMarkDue}
+                  disabled={actionLoading}
+                  className="px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl transition-colors shadow-2xs inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  id="btn-dialog-confirm-due"
+                >
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  {actionLoading ? 'Updating...' : dueAmount > 0 ? `Confirm Due (₹${dueAmount})` : 'Mark Pending Due'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
