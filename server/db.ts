@@ -12,6 +12,7 @@ export interface UserRecord {
   full_name?: string;
   password_hash: string;
   role: 'STUDENT' | 'STAFF' | 'HOD' | 'ADMIN';
+  department_id?: number | null;
   is_active: boolean;
   is_registered?: boolean;
   created_at: string;
@@ -422,11 +423,16 @@ class InMemoryDatabase {
     const loaded = this.loadFromFile();
     if (loaded) {
       this.ensureAdminsExist();
+      this.ensureHODsExist();
+      this.ensureStaffExist();
+      this.ensureStudentUsersExist();
       this.deduplicateAll();
       this.saveToFile();
     } else {
       this.seedClean();
       this.ensureStaffExist();
+      this.ensureHODsExist();
+      this.ensureStudentUsersExist();
       this.saveToFile();
     }
 
@@ -1060,7 +1066,14 @@ class InMemoryDatabase {
   }
 
   ensureAdminsExist() {
-    const adminEmails = ['admin@college.edu', 'admin@institution.edu', 'ramya@sasurie.edu', 'ramyacse23@sasurie.com', 'admin@sasurie.edu'];
+    const adminEmails = [
+      'admin@college.edu',
+      'admin@institution.edu',
+      'ramya@sasurie.edu',
+      'ramyacse23@sasurie.com',
+      'admin@sasurie.edu',
+      'monishas0707@gmail.com'
+    ];
     const soleAdminPass = 'RamyaSasurie@123';
 
     for (const em of adminEmails) {
@@ -1103,7 +1116,7 @@ class InMemoryDatabase {
         name: 'Dr. K. Senthil Kumar, M.E., Ph.D.',
         empId: 'HOD-CSE-001',
         emails: ['hod.cse@college.edu', 'hod.cse@college.ac.in', 'hod.cse@sasurie.com', 'hod.cse@sasurie.edu'],
-        passwords: ['College@123', 'StaffPassword@123', 'Password123!']
+        passwords: ['Sasurie@123', 'College@123', 'StaffPassword@123', 'Password123!']
       },
       {
         deptCode: 'ECE',
@@ -1111,7 +1124,7 @@ class InMemoryDatabase {
         name: 'Dr. M. Lakshmi, M.E., Ph.D.',
         empId: 'HOD-ECE-001',
         emails: ['hod.ece@college.edu', 'hod.ece@sasurie.edu'],
-        passwords: ['College@123', 'StaffPassword@123', 'Password123!']
+        passwords: ['Sasurie@123', 'College@123', 'StaffPassword@123', 'Password123!']
       },
       {
         deptCode: 'MECH',
@@ -1119,7 +1132,7 @@ class InMemoryDatabase {
         name: 'Dr. R. Vijayakumar, M.E., Ph.D.',
         empId: 'HOD-MECH-001',
         emails: ['hod.mech@college.edu', 'hod.mech@sasurie.edu'],
-        passwords: ['College@123', 'StaffPassword@123', 'Password123!']
+        passwords: ['Sasurie@123', 'College@123', 'StaffPassword@123', 'Password123!']
       },
       {
         deptCode: 'EEE',
@@ -1127,7 +1140,7 @@ class InMemoryDatabase {
         name: 'Dr. S. R. Murugan, M.E., Ph.D.',
         empId: 'HOD-EEE-001',
         emails: ['hod.eee@college.edu', 'hod.eee@sasurie.edu'],
-        passwords: ['College@123', 'StaffPassword@123', 'Password123!']
+        passwords: ['Sasurie@123', 'College@123', 'StaffPassword@123', 'Password123!']
       }
     ];
 
@@ -1144,6 +1157,7 @@ class InMemoryDatabase {
             email: em,
             password_hash: hashPassword(conf.passwords[0]),
             role: 'HOD',
+            department_id: deptId,
             is_active: true,
             is_registered: true,
             created_at: new Date().toISOString()
@@ -1151,6 +1165,7 @@ class InMemoryDatabase {
           this.users.push(user);
         } else {
           user.role = 'HOD';
+          user.department_id = deptId;
           user.is_registered = true;
           if (user.is_active === undefined) {
             user.is_active = true;
@@ -1187,6 +1202,87 @@ class InMemoryDatabase {
           }
         }
       }
+    }
+  }
+
+  ensureStudentUsersExist() {
+    const defaultStudentPassHash = hashPassword('Sasurie@123');
+
+    // 1. Correct any mislinked student accounts (e.g. Monisha S linked to Staff Kavipriya id 31)
+    for (const student of this.students) {
+      let linkedUser = this.users.find(u => u.id === student.user_id);
+      if (linkedUser && linkedUser.role !== 'STUDENT') {
+        // Mislinked to a non-student account! Find the proper student account
+        let correctUser = this.users.find(u => u.email.toLowerCase() === student.email.toLowerCase() && u.role === 'STUDENT');
+        if (!correctUser) {
+          correctUser = this.users.find(u => u.username?.toLowerCase() === student.register_number.toLowerCase() && u.role === 'STUDENT');
+        }
+        if (correctUser) {
+          student.user_id = correctUser.id;
+        } else {
+          const nextId = Math.max(0, ...this.users.map(u => u.id)) + 1;
+          const newUser: UserRecord = {
+            id: nextId,
+            email: student.email,
+            username: student.register_number,
+            full_name: student.full_name,
+            password_hash: defaultStudentPassHash,
+            role: 'STUDENT',
+            is_active: true,
+            is_registered: true,
+            created_at: new Date().toISOString()
+          };
+          this.users.push(newUser);
+          student.user_id = newUser.id;
+        }
+      } else if (!linkedUser || student.user_id === 0) {
+        // Student had no linked user
+        let correctUser = this.users.find(u => u.email.toLowerCase() === student.email.toLowerCase() && u.role === 'STUDENT');
+        if (!correctUser) {
+          const nextId = Math.max(0, ...this.users.map(u => u.id)) + 1;
+          correctUser = {
+            id: nextId,
+            email: student.email,
+            username: student.register_number,
+            full_name: student.full_name,
+            password_hash: defaultStudentPassHash,
+            role: 'STUDENT',
+            is_active: true,
+            is_registered: true,
+            created_at: new Date().toISOString()
+          };
+          this.users.push(correctUser);
+        }
+        student.user_id = correctUser.id;
+      }
+    }
+
+    // 2. Explicitly ensure Monisha S is configured and linked
+    const monishaStudent = this.students.find(s => s.register_number === '732423104005' || s.email.toLowerCase() === 'monisha23@sasurie.com');
+    if (monishaStudent) {
+      let monishaUser = this.users.find(u => u.email.toLowerCase() === 'monisha23@sasurie.com' || u.id === 30);
+      if (!monishaUser) {
+        const nextId = Math.max(0, ...this.users.map(u => u.id)) + 1;
+        monishaUser = {
+          id: nextId,
+          email: 'monisha23@sasurie.com',
+          username: '732423104005',
+          full_name: 'Monisha S',
+          password_hash: defaultStudentPassHash,
+          role: 'STUDENT',
+          is_active: true,
+          is_registered: true,
+          created_at: new Date().toISOString()
+        };
+        this.users.push(monishaUser);
+      }
+      monishaUser.role = 'STUDENT';
+      monishaUser.username = '732423104005';
+      monishaUser.full_name = 'Monisha S';
+      monishaUser.password_hash = defaultStudentPassHash;
+      monishaUser.is_active = true;
+      monishaUser.is_registered = true;
+      monishaStudent.user_id = monishaUser.id;
     }
   }
 

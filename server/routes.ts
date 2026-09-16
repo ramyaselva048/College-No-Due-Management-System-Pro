@@ -103,7 +103,9 @@ const COLLEGE_ADMIN_EMAILS = [
   'admin@institution.edu',
   'ramya@sasurie.edu',
   'ramyacse23@sasurie.com',
-  'admin@sasurie.edu'
+  'admin@sasurie.edu',
+  'monishas0707@gmail.com',
+  'monisha23@sasurie.com'
 ];
 
 // Verification endpoint: Informs client that self-registration is permanently disabled
@@ -138,7 +140,8 @@ apiRouter.post('/auth/login', (req: Request, res: Response) => {
   let student = db.students.find(
     s => s.register_number.toUpperCase() === upperIdentifier ||
          s.email.toLowerCase() === lowerIdentifier ||
-         (lowerIdentifier === 'ramyacse23@sasurie.com' && s.email.toLowerCase() === 'ramyacse2327@sasurie.com')
+         (lowerIdentifier === 'ramyacse23@sasurie.com' && s.email.toLowerCase() === 'ramyacse2327@sasurie.com') ||
+         (lowerIdentifier === 'monishas0707@gmail.com' && (s.email.toLowerCase() === 'monisha23@sasurie.com' || s.register_number === '732423104005'))
   );
 
   // Find staff by employee ID or email in the Admin Portal's registry (db.staff)
@@ -181,7 +184,10 @@ apiRouter.post('/auth/login', (req: Request, res: Response) => {
     }
   } else if (requestedRole === 'STUDENT') {
     if (student) {
-      user = db.users.find(u => u.id === student!.user_id || u.email.toLowerCase() === student!.email.toLowerCase());
+      user = db.users.find(u => (u.id === student!.user_id || u.email.toLowerCase() === student!.email.toLowerCase()) && u.role === 'STUDENT');
+      if (!user) {
+        user = db.users.find(u => u.id === student!.user_id || u.email.toLowerCase() === student!.email.toLowerCase());
+      }
     } else {
       user = db.users.find(u => u.email.toLowerCase() === lowerIdentifier && u.role === 'STUDENT');
     }
@@ -216,7 +222,31 @@ apiRouter.post('/auth/login', (req: Request, res: Response) => {
         detail: 'Access denied: Only authorized Heads of Department (HOD) allocated by the Administrator can log in through the HOD Portal.'
       });
     }
-    const hodStaffRecord = staff || db.staff.find(s => s.user_id === user!.id || s.email.toLowerCase() === user!.email.toLowerCase());
+    let hodStaffRecord = staff || db.staff.find(s => s.user_id === user!.id || s.email.toLowerCase() === user!.email.toLowerCase());
+    if (!hodStaffRecord || !hodStaffRecord.department_id) {
+      const deptCodeMatch = user.email.toLowerCase().match(/hod\.([a-z]+)@/);
+      const dCode = deptCodeMatch ? deptCodeMatch[1].toUpperCase() : '';
+      const d = dCode ? db.departments.find(dept => dept.code?.toUpperCase() === dCode) : null;
+      const deptId = d ? d.id : (user.department_id || 1);
+
+      if (!hodStaffRecord) {
+        hodStaffRecord = {
+          id: Math.max(0, ...db.staff.map(s => s.id)) + 1,
+          user_id: user.id,
+          employee_id: `HOD-${dCode || 'GEN'}-001`,
+          full_name: user.full_name || `HOD ${dCode || 'Department'}`,
+          email: user.email,
+          phone: '9842100000',
+          department_id: deptId,
+          designation: `Professor & Head of Department (${dCode || 'Department'})`,
+          is_active: true,
+          created_at: new Date().toISOString()
+        };
+        db.staff.push(hodStaffRecord);
+      } else {
+        hodStaffRecord.department_id = deptId;
+      }
+    }
     if (!hodStaffRecord || !hodStaffRecord.department_id) {
       return res.status(403).json({
         detail: 'Access denied: No department has been allocated to this HOD account. Please contact the Administrator.'

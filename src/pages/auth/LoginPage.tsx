@@ -88,7 +88,7 @@ export const LoginPage: React.FC = () => {
       <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white dark:bg-slate-900 py-8 px-6 sm:px-10 rounded-2xl shadow-xl dark:shadow-slate-950/40 border border-slate-200 dark:border-slate-800 transition-colors">
           {/* Role Tabs */}
-          <div className="grid grid-cols-4 gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl mb-6">
+          <div className="grid grid-cols-4 gap-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl mb-6">
             <button
               type="button"
               id="tab-role-student"
@@ -100,8 +100,8 @@ export const LoginPage: React.FC = () => {
               }}
               className={`py-2 text-[11px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 ${
                 activeRole === 'STUDENT'
-                  ? 'bg-white text-indigo-600 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <GraduationCap className="w-3.5 h-3.5" />
@@ -118,8 +118,8 @@ export const LoginPage: React.FC = () => {
               }}
               className={`py-2 text-[11px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 ${
                 activeRole === 'HOD'
-                  ? 'bg-white text-indigo-600 shadow-xs ring-1 ring-indigo-200'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs ring-1 ring-indigo-200 dark:ring-indigo-700'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <Building2 className="w-3.5 h-3.5" />
@@ -136,8 +136,8 @@ export const LoginPage: React.FC = () => {
               }}
               className={`py-2 text-[11px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 ${
                 activeRole === 'STAFF'
-                  ? 'bg-white text-emerald-600 shadow-xs ring-1 ring-emerald-200'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-300 shadow-xs ring-1 ring-emerald-200 dark:ring-emerald-700'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <Building2 className="w-3.5 h-3.5" />
@@ -154,8 +154,8 @@ export const LoginPage: React.FC = () => {
               }}
               className={`py-2 text-[11px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 ${
                 activeRole === 'ADMIN'
-                  ? 'bg-white text-purple-600 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-white dark:bg-slate-700 text-purple-600 dark:text-purple-300 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <ShieldCheck className="w-3.5 h-3.5" />
@@ -164,41 +164,41 @@ export const LoginPage: React.FC = () => {
           </div>
 
           {activeRole === 'HOD' && (
-            <div className="mb-4 p-3 bg-indigo-50/80 border border-indigo-200/80 rounded-xl text-indigo-950 text-xs flex flex-col gap-1.5">
-              <div className="flex items-center justify-between font-bold text-indigo-900">
+            <div className="mb-4 p-3 bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-800 rounded-xl text-indigo-950 dark:text-indigo-200 text-xs flex flex-col gap-1.5">
+              <div className="flex items-center justify-between font-bold text-indigo-900 dark:text-indigo-100">
                 <span className="flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-indigo-600" />
+                  <ShieldCheck className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                   Head of Department (HOD) Portal
                 </span>
-                <span className="text-[10px] bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full font-semibold border border-indigo-200">
+                <span className="text-[10px] bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-300 px-2 py-0.5 rounded-full font-semibold border border-indigo-200 dark:border-indigo-700">
                   Admin Allocated
                 </span>
               </div>
-              <p className="text-indigo-800/90 text-[11px] leading-relaxed">
+              <p className="text-indigo-800/90 dark:text-indigo-300/90 text-[11px] leading-relaxed">
                 Only department HODs allocated by the College Administrator can log in with their designated email and password.
               </p>
             </div>
           )}
 
           {activeRole === 'STAFF' && (
-            <div className="mb-4 p-3 bg-emerald-50/80 border border-emerald-200/80 rounded-xl text-emerald-950 text-xs flex flex-col gap-1.5">
-              <div className="flex items-center justify-between font-bold text-emerald-900">
+            <div className="mb-4 p-3 bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800 rounded-xl text-emerald-950 dark:text-emerald-200 text-xs flex flex-col gap-1.5">
+              <div className="flex items-center justify-between font-bold text-emerald-900 dark:text-emerald-100">
                 <span className="flex items-center gap-1.5">
-                  <Building2 className="w-4 h-4 text-emerald-600" />
+                  <Building2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   Department Faculty & Staff Portal
                 </span>
-                <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-semibold border border-emerald-200">
+                <span className="text-[10px] bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 rounded-full font-semibold border border-emerald-200 dark:border-emerald-700">
                   HOD Allocated
                 </span>
               </div>
-              <p className="text-emerald-800/90 text-[11px] leading-relaxed">
+              <p className="text-emerald-800/90 dark:text-emerald-300/90 text-[11px] leading-relaxed">
                 Only faculty members allocated by the Head of Department (HOD) can sign in to evaluate subject dues and clearance requests.
               </p>
             </div>
           )}
 
           {error && (
-            <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs flex items-center gap-2">
+            <div className="mb-4 p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-xl text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{error}</span>
             </div>
@@ -206,7 +206,7 @@ export const LoginPage: React.FC = () => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 {activeRole === 'STUDENT'
                   ? 'Register Number or College Email'
                   : activeRole === 'HOD'
@@ -225,7 +225,7 @@ export const LoginPage: React.FC = () => {
                   required
                   placeholder={
                     activeRole === 'STUDENT'
-                      ? 'e.g. 732423104036 or student@college.edu'
+                      ? 'e.g. 732423104005 or student@college.edu'
                       : activeRole === 'HOD'
                       ? 'e.g. hod.cse@college.edu or HOD-CSE-001'
                       : activeRole === 'STAFF'
@@ -234,18 +234,18 @@ export const LoginPage: React.FC = () => {
                   }
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full text-xs pl-9 pr-3 py-2.5 border border-slate-200 rounded-xl bg-slate-50/50 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                  className="w-full text-xs pl-9 pr-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50/50 dark:bg-slate-800/60 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                 />
               </div>
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="block text-xs font-semibold text-slate-700">Password</label>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">Password</label>
                 <button
                   type="button"
                   onClick={() => setShowForgotModal(true)}
-                  className="text-[11px] text-indigo-600 hover:text-indigo-800 font-medium"
+                  className="text-[11px] text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium"
                 >
                   Forgot Password?
                 </button>
@@ -261,12 +261,12 @@ export const LoginPage: React.FC = () => {
                   placeholder="••••••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full text-xs pl-9 pr-10 py-2.5 border border-slate-200 rounded-xl bg-slate-50/50 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                  className="w-full text-xs pl-9 pr-10 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50/50 dark:bg-slate-800/60 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -277,7 +277,7 @@ export const LoginPage: React.FC = () => {
               id="btn-login-submit"
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 px-4 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full py-2.5 px-4 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
             >
               {loading ? (
                 'Authenticating...'
@@ -289,13 +289,13 @@ export const LoginPage: React.FC = () => {
             </button>
           </form>
 
-          <div className="mt-6 text-center pt-4 border-t border-slate-100">
-            <div className="flex items-center justify-center gap-1 text-[11px] font-semibold text-slate-600">
-              <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
+          <div className="mt-6 text-center pt-4 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-center gap-1 text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+              <ShieldCheck className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
               <span>Institutional Secure Access</span>
             </div>
-            <p className="text-[10px] text-slate-400 mt-1">
-              Student accounts are registered by the College Administrator. Use your assigned institutional credentials to log in.
+            <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">
+              Clearance credentials are managed securely by the College Administration.
             </p>
           </div>
         </div>

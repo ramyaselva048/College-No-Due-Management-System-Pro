@@ -257,7 +257,7 @@
       "is_registered": true,
       "created_at": "2026-09-10T09:00:37.006Z",
       "updated_at": null,
-      "department_id": null
+      "department_id": 1
     },
     {
       "id": 28,
@@ -290,7 +290,9 @@
       "is_registered": true,
       "created_at": "2026-09-10T12:50:14.527Z",
       "updated_at": null,
-      "department_id": null
+      "department_id": null,
+      "full_name": "Monisha S",
+      "username": "732423104005"
     },
     {
       "id": 31,
@@ -963,7 +965,7 @@
       "is_registered": true,
       "created_at": "2026-09-12T11:00:24.779Z",
       "updated_at": null,
-      "department_id": null
+      "department_id": 1
     },
     {
       "id": 92,
@@ -974,7 +976,7 @@
       "is_registered": true,
       "created_at": "2026-09-12T11:00:24.827Z",
       "updated_at": null,
-      "department_id": null
+      "department_id": 1
     },
     {
       "id": 93,
@@ -985,7 +987,7 @@
       "is_registered": true,
       "created_at": "2026-09-12T11:00:24.873Z",
       "updated_at": null,
-      "department_id": null
+      "department_id": 1
     },
     {
       "id": 94,
@@ -996,7 +998,7 @@
       "is_registered": true,
       "created_at": "2026-09-12T11:00:24.917Z",
       "updated_at": null,
-      "department_id": null
+      "department_id": 2
     },
     {
       "id": 95,
@@ -1007,7 +1009,7 @@
       "is_registered": true,
       "created_at": "2026-09-12T11:00:24.960Z",
       "updated_at": null,
-      "department_id": null
+      "department_id": 3
     },
     {
       "id": 96,
@@ -1018,7 +1020,7 @@
       "is_registered": true,
       "created_at": "2026-09-12T11:00:25.007Z",
       "updated_at": null,
-      "department_id": null
+      "department_id": 4
     },
     {
       "id": 97,
@@ -1029,7 +1031,7 @@
       "is_registered": true,
       "created_at": "2026-09-12T11:00:25.054Z",
       "updated_at": null,
-      "department_id": null
+      "department_id": 4
     },
     {
       "id": 98,
@@ -1389,6 +1391,28 @@
       "is_active": true,
       "is_registered": true,
       "created_at": "2026-09-14T10:24:54.714Z"
+    },
+    {
+      "id": 131,
+      "email": "priya.m@sasurie.edu",
+      "username": "732423106015",
+      "full_name": "Priya Mohan",
+      "password_hash": "3c922db43f2c5383106c1c34ffe0e3934b265aabecacab9e36a0d28ef90359d2",
+      "role": "STUDENT",
+      "is_active": true,
+      "is_registered": true,
+      "created_at": "2026-09-16T06:37:39.671Z"
+    },
+    {
+      "id": 132,
+      "email": "monishas0707@gmail.com",
+      "username": "monisha_admin",
+      "full_name": "Monisha S (Administrator)",
+      "password_hash": "cf379b4b9ce24f3a75d3e6e55cef4a6639c51591c096e64d41f01984a9a2c775",
+      "role": "ADMIN",
+      "is_active": true,
+      "is_registered": true,
+      "created_at": "2026-09-16T06:37:39.730Z"
     }
   ],
   "departments": [
@@ -1712,7 +1736,7 @@
     },
     {
       "id": 3,
-      "user_id": 0,
+      "user_id": 131,
       "register_number": "732423106015",
       "full_name": "Priya Mohan",
       "email": "priya.m@sasurie.edu",
@@ -1750,7 +1774,7 @@
     },
     {
       "id": 5,
-      "user_id": 31,
+      "user_id": 30,
       "register_number": "732423104005",
       "full_name": "Monisha S",
       "email": "monisha23@sasurie.com",
@@ -3017,7 +3041,7 @@
       "id": 10,
       "user_id": 12,
       "employee_id": "TRN-101",
-      "full_name": "K.Murugesan",
+      "full_name": "Mr. A. Selvam",
       "email": "transport@sasurie.edu",
       "phone": "9842100110",
       "department_id": 1,
@@ -3517,6 +3541,18 @@
       "created_at": "2026-09-14T10:24:54.716Z",
       "subject_term": "Sports & Games",
       "is_active": true
+    },
+    {
+      "id": 59,
+      "user_id": 24,
+      "employee_id": "HOD-CSE-001",
+      "full_name": "HOD CSE",
+      "email": "hod.cse@sasurie.edu",
+      "phone": "9842100000",
+      "department_id": 1,
+      "designation": "Professor & Head of Department (CSE)",
+      "is_active": true,
+      "created_at": "2026-09-16T06:41:02.261Z"
     }
   ],
   "dueRecords": [],
@@ -7383,6 +7419,303 @@
     }
   ],
   "auditLogs": [
+    {
+      "id": 606,
+      "user_id": 132,
+      "user_email": "monishas0707@gmail.com",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 132,
+      "new_values": "{\"identifier\":\"monishas0707@gmail.com\",\"role\":\"ADMIN\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-16T06:41:03.018Z"
+    },
+    {
+      "id": 605,
+      "user_id": 3,
+      "user_email": "admin@sasurie.edu",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 3,
+      "new_values": "{\"identifier\":\"admin@sasurie.edu\",\"role\":\"ADMIN\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-16T06:41:02.961Z"
+    },
+    {
+      "id": 604,
+      "user_id": 9,
+      "user_email": "library@sasurie.edu",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 9,
+      "new_values": "{\"identifier\":\"library@sasurie.edu\",\"role\":\"STAFF\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-16T06:41:02.907Z"
+    },
+    {
+      "id": 603,
+      "user_id": 24,
+      "user_email": "hod.cse@sasurie.edu",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 24,
+      "new_values": "{\"identifier\":\"hod.cse@sasurie.edu\",\"role\":\"HOD\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-16T06:41:02.261Z"
+    },
+    {
+      "id": 602,
+      "user_id": 28,
+      "user_email": "732423104036@sasurie.edu",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 28,
+      "new_values": "{\"identifier\":\"732423104036\",\"role\":\"STUDENT\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-16T06:41:02.207Z"
+    },
+    {
+      "id": 601,
+      "user_id": 30,
+      "user_email": "monisha23@sasurie.com",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 30,
+      "new_values": "{\"identifier\":\"monishas0707@gmail.com\",\"role\":\"STUDENT\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-16T06:41:02.151Z"
+    },
+    {
+      "id": 600,
+      "user_id": 30,
+      "user_email": "monisha23@sasurie.com",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 30,
+      "new_values": "{\"identifier\":\"732423104005\",\"role\":\"STUDENT\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-16T06:41:02.093Z"
+    },
+    {
+      "id": 599,
+      "user_id": 132,
+      "user_email": "monishas0707@gmail.com",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 132,
+      "new_values": "{\"identifier\":\"monishas0707@gmail.com\",\"role\":\"ADMIN\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-16T06:39:00.159Z"
+    },
+    {
+      "id": 598,
+      "user_id": 3,
+      "user_email": "admin@sasurie.edu",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 3,
+      "new_values": "{\"identifier\":\"admin@sasurie.edu\",\"role\":\"ADMIN\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-16T06:39:00.105Z"
+    },
+    {
+      "id": 597,
+      "user_id": 9,
+      "user_email": "library@sasurie.edu",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 9,
+      "new_values": "{\"identifier\":\"library@sasurie.edu\",\"role\":\"STAFF\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-16T06:39:00.049Z"
+    },
+    {
+      "id": 596,
+      "user_id": 24,
+      "user_email": "hod.cse@sasurie.edu",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 24,
+      "new_values": "{\"identifier\":\"hod.cse@sasurie.edu\",\"role\":\"HOD\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-16T06:38:59.353Z"
+    },
+    {
+      "id": 595,
+      "user_id": 28,
+      "user_email": "732423104036@sasurie.edu",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 28,
+      "new_values": "{\"identifier\":\"732423104036\",\"role\":\"STUDENT\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-16T06:38:59.300Z"
+    },
+    {
+      "id": 594,
+      "user_id": 30,
+      "user_email": "monisha23@sasurie.com",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 30,
+      "new_values": "{\"identifier\":\"monishas0707@gmail.com\",\"role\":\"STUDENT\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-16T06:38:59.247Z"
+    },
+    {
+      "id": 593,
+      "user_id": 30,
+      "user_email": "monisha23@sasurie.com",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 30,
+      "new_values": "{\"identifier\":\"732423104005\",\"role\":\"STUDENT\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-16T06:38:59.187Z"
+    },
+    {
+      "id": 592,
+      "user_id": 132,
+      "user_email": "monishas0707@gmail.com",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 132,
+      "new_values": "{\"identifier\":\"monishas0707@gmail.com\",\"role\":\"ADMIN\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-16T06:37:48.083Z"
+    },
+    {
+      "id": 591,
+      "user_id": 3,
+      "user_email": "admin@sasurie.edu",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 3,
+      "new_values": "{\"identifier\":\"admin@sasurie.edu\",\"role\":\"ADMIN\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-16T06:37:48.029Z"
+    },
+    {
+      "id": 590,
+      "user_id": 9,
+      "user_email": "library@sasurie.edu",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 9,
+      "new_values": "{\"identifier\":\"library@sasurie.edu\",\"role\":\"STAFF\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-16T06:37:47.977Z"
+    },
+    {
+      "id": 589,
+      "user_id": 24,
+      "user_email": "hod.cse@sasurie.edu",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 24,
+      "new_values": "{\"identifier\":\"hod.cse@sasurie.edu\",\"role\":\"HOD\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-16T06:37:47.343Z"
+    },
+    {
+      "id": 588,
+      "user_id": 28,
+      "user_email": "732423104036@sasurie.edu",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 28,
+      "new_values": "{\"identifier\":\"732423104036\",\"role\":\"STUDENT\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-16T06:37:47.290Z"
+    },
+    {
+      "id": 587,
+      "user_id": 4,
+      "user_email": "hod.ece@sasurie.edu",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 4,
+      "new_values": "{\"identifier\":\"hod.ece@sasurie.edu\",\"role\":\"HOD\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-16T06:34:44.982Z"
+    },
+    {
+      "id": 586,
+      "user_id": 28,
+      "user_email": "732423104036@sasurie.edu",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 28,
+      "new_values": "{\"identifier\":\"732423104036\",\"role\":\"STUDENT\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-16T06:34:31.474Z"
+    },
+    {
+      "id": 585,
+      "user_id": 9,
+      "user_email": "library@sasurie.edu",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 9,
+      "new_values": "{\"identifier\":\"library@sasurie.edu\",\"role\":\"STAFF\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-16T06:34:02.797Z"
+    },
+    {
+      "id": 584,
+      "user_id": 30,
+      "user_email": "monisha23@sasurie.com",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 30,
+      "new_values": "{\"identifier\":\"732423104005\",\"role\":\"STUDENT\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-16T06:34:02.099Z"
+    },
+    {
+      "id": 583,
+      "user_id": 28,
+      "user_email": "732423104036@sasurie.edu",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 28,
+      "new_values": "{\"identifier\":\"732423104036\",\"role\":\"STUDENT\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-16T06:34:02.043Z"
+    },
+    {
+      "id": 582,
+      "user_id": 3,
+      "user_email": "admin@sasurie.edu",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 3,
+      "new_values": "{\"identifier\":\"admin@sasurie.edu\",\"role\":\"ADMIN\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-16T06:33:53.064Z"
+    },
+    {
+      "id": 581,
+      "user_id": 3,
+      "user_email": "admin@sasurie.edu",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 3,
+      "new_values": "{\"identifier\":\"admin@sasurie.edu\",\"role\":\"ADMIN\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-16T06:33:03.165Z"
+    },
+    {
+      "id": 580,
+      "user_id": 3,
+      "user_email": "admin@sasurie.edu",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 3,
+      "new_values": "{\"identifier\":\"admin@sasurie.edu\",\"role\":\"ADMIN\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-16T06:32:17.836Z"
+    },
     {
       "id": 579,
       "user_id": 35,
@@ -28704,7 +29037,7 @@
     }
   ],
   "nextId": {
-    "users": 131,
+    "users": 133,
     "departments": 19,
     "courses": 12,
     "dueCategories": 6,
@@ -28716,7 +29049,7 @@
     "noDueApprovals": 58,
     "certificates": 13,
     "notifications": 184,
-    "auditLogs": 580,
+    "auditLogs": 607,
     "subjectCourses": 1034
   }
 }
