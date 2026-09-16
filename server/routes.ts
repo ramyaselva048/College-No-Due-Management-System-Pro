@@ -64,14 +64,22 @@ function requireRole(roles: Array<'STUDENT' | 'STAFF' | 'HOD' | 'ADMIN'>) {
 // ----------------------------------------------------
 apiRouter.get('/health', async (req, res) => {
   let pgStatus = 'disconnected';
+  let pgError = null;
+
   try {
+    if (!db.isPgConnected && process.env.DATABASE_URL) {
+      await db.init().catch(err => { pgError = err?.message; });
+    }
+
     if (db.isPgConnected) {
       const pgRes = await pgQuery('SELECT NOW() as now');
       if (pgRes && pgRes.rows && pgRes.rows.length > 0) {
         pgStatus = 'connected (PostgreSQL - Neon Cloud SQL)';
       }
     } else {
-      pgStatus = 'local-storage (file/in-memory database active)';
+      pgStatus = process.env.DATABASE_URL 
+        ? `connecting-failed: ${pgError || 'check credentials/SSL'}` 
+        : 'local-storage (DATABASE_URL environment variable is missing on Render)';
     }
   } catch (err: any) {
     pgStatus = 'error: ' + (err?.message || 'unknown');
@@ -81,6 +89,7 @@ apiRouter.get('/health', async (req, res) => {
     status: 'healthy',
     service: 'College No Due Management System',
     database: pgStatus,
+    has_database_url: Boolean(process.env.DATABASE_URL),
     stats: {
       users: db.users.length,
       students: db.students.length,
@@ -92,6 +101,32 @@ apiRouter.get('/health', async (req, res) => {
       certificates: db.certificates.length
     }
   });
+});
+
+// Explicit endpoint to trigger full database sync from UI or script
+apiRouter.post('/admin/sync-database', async (req, res) => {
+  try {
+    if (!db.isPgConnected) {
+      await db.init();
+    }
+    if (!db.isPgConnected) {
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Could not establish connection with PostgreSQL. Please verify DATABASE_URL in Render environment settings.' 
+      });
+    }
+
+    await db.syncToPostgres(true, false);
+    return res.json({ 
+      success: true, 
+      message: 'All records successfully synchronized to Neon PostgreSQL database!' 
+    });
+  } catch (err: any) {
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Sync error: ' + (err?.message || 'Unknown database error') 
+    });
+  }
 });
 
 // ----------------------------------------------------

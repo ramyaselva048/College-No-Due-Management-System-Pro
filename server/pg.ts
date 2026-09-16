@@ -5,8 +5,16 @@ import type { QueryResult } from 'pg';
 let realPool: Pool | null = null;
 
 export function getPool(): Pool | null {
-  const connStr = process.env.DATABASE_URL?.trim();
+  let connStr = process.env.DATABASE_URL?.trim();
   if (!connStr) return null;
+
+  // Clean Neon connection string if needed (channel_binding=require is not natively supported by pg without custom tls flags)
+  if (connStr.includes('channel_binding=')) {
+    connStr = connStr.replace(/[?&]channel_binding=[^&]+/g, '');
+    if (!connStr.includes('?')) {
+      connStr = connStr.replace(/&/, '?');
+    }
+  }
 
   if (!realPool) {
     try {
@@ -15,7 +23,7 @@ export function getPool(): Pool | null {
         ssl: { rejectUnauthorized: false },
         max: 10,
         idleTimeoutMillis: 30000,
-        connectionTimeoutMillis: 8000,
+        connectionTimeoutMillis: 10000,
       });
 
       realPool.on('error', (err) => {

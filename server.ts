@@ -5,7 +5,7 @@ import { createServer as createViteServer } from 'vite';
 import { apiRouter } from './server/routes';
 import { db } from './server/db';
 
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 async function startServer() {
   // Initialize connection and sync with PostgreSQL

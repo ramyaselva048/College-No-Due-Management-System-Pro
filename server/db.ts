@@ -451,8 +451,191 @@ class InMemoryDatabase {
       const ok = await testPgConnection();
       if (ok) {
         this.isPgConnected = true;
-        // Ensure subject_courses and no_due_requests tables and columns exist
+        // Ensure all core tables exist in Neon PostgreSQL
         await pgQuery(`
+          CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            email VARCHAR(255) UNIQUE NOT NULL,
+            username VARCHAR(255),
+            full_name VARCHAR(255),
+            password_hash VARCHAR(255) NOT NULL,
+            role VARCHAR(50) NOT NULL,
+            department_id INTEGER,
+            is_active BOOLEAN DEFAULT TRUE,
+            is_registered BOOLEAN DEFAULT TRUE,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ
+          );
+
+          CREATE TABLE IF NOT EXISTS departments (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            code VARCHAR(50) NOT NULL,
+            description TEXT,
+            type VARCHAR(50) DEFAULT 'ACADEMIC',
+            category VARCHAR(50) DEFAULT 'academic',
+            is_active BOOLEAN DEFAULT TRUE,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+          );
+
+          CREATE TABLE IF NOT EXISTS courses (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            code VARCHAR(50) NOT NULL,
+            department_id INTEGER,
+            duration INTEGER DEFAULT 4,
+            is_active BOOLEAN DEFAULT TRUE,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+          );
+
+          CREATE TABLE IF NOT EXISTS due_categories (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            code VARCHAR(50) NOT NULL,
+            description TEXT,
+            is_active BOOLEAN DEFAULT TRUE,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+          );
+
+          CREATE TABLE IF NOT EXISTS students (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER,
+            register_number VARCHAR(50) UNIQUE NOT NULL,
+            full_name VARCHAR(255) NOT NULL,
+            email VARCHAR(255) NOT NULL,
+            phone VARCHAR(50),
+            department_id INTEGER,
+            course_id INTEGER,
+            year INTEGER DEFAULT 1,
+            semester INTEGER DEFAULT 1,
+            section VARCHAR(20) DEFAULT 'A',
+            admission_year INTEGER,
+            student_type VARCHAR(50) DEFAULT 'Dayscholar',
+            attendance_percentage NUMERIC DEFAULT 98,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+          );
+
+          CREATE TABLE IF NOT EXISTS staff (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER,
+            employee_id VARCHAR(50) UNIQUE NOT NULL,
+            full_name VARCHAR(255) NOT NULL,
+            email VARCHAR(255) NOT NULL,
+            phone VARCHAR(50),
+            department_id INTEGER,
+            designation VARCHAR(255),
+            subject_term VARCHAR(255),
+            is_active BOOLEAN DEFAULT TRUE,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+          );
+
+          CREATE TABLE IF NOT EXISTS due_records (
+            id SERIAL PRIMARY KEY,
+            student_id INTEGER,
+            department_id INTEGER,
+            category_id INTEGER,
+            amount NUMERIC DEFAULT 0,
+            status VARCHAR(50) DEFAULT 'pending',
+            description TEXT,
+            remarks TEXT,
+            created_by INTEGER,
+            updated_by INTEGER,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ
+          );
+
+          CREATE TABLE IF NOT EXISTS due_payments (
+            id SERIAL PRIMARY KEY,
+            due_record_id INTEGER,
+            student_id INTEGER,
+            amount NUMERIC DEFAULT 0,
+            payment_reference VARCHAR(255),
+            payment_status VARCHAR(50),
+            paid_at TIMESTAMPTZ DEFAULT NOW()
+          );
+
+          CREATE TABLE IF NOT EXISTS no_due_requests (
+            id SERIAL PRIMARY KEY,
+            student_id INTEGER,
+            status VARCHAR(50) DEFAULT 'submitted',
+            submitted_at TIMESTAMPTZ DEFAULT NOW(),
+            reviewed_at TIMESTAMPTZ,
+            reviewed_by INTEGER,
+            remarks TEXT,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            hod_approved_by INTEGER,
+            hod_name VARCHAR(255),
+            hod_approved_at TIMESTAMPTZ,
+            principal_approved_by INTEGER,
+            principal_name VARCHAR(255),
+            principal_approved_at TIMESTAMPTZ,
+            exam_type VARCHAR(100),
+            form_date VARCHAR(50),
+            academic_year VARCHAR(50),
+            year INTEGER,
+            semester INTEGER,
+            student_type VARCHAR(50),
+            attendance_percentage VARCHAR(50),
+            attendance_month VARCHAR(50),
+            undertaking_status VARCHAR(50),
+            subjects JSONB,
+            labs JSONB,
+            signatories JSONB,
+            common_nodes JSONB
+          );
+
+          CREATE TABLE IF NOT EXISTS no_due_approvals (
+            id SERIAL PRIMARY KEY,
+            request_id INTEGER,
+            department_id INTEGER,
+            approved_by INTEGER,
+            status VARCHAR(50) DEFAULT 'pending',
+            remarks TEXT,
+            approved_at TIMESTAMPTZ,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+          );
+
+          CREATE TABLE IF NOT EXISTS certificates (
+            id SERIAL PRIMARY KEY,
+            request_id INTEGER,
+            student_id INTEGER,
+            certificate_number VARCHAR(100) UNIQUE,
+            verification_code VARCHAR(100) UNIQUE,
+            issued_at TIMESTAMPTZ DEFAULT NOW(),
+            is_valid BOOLEAN DEFAULT TRUE,
+            issued_by INTEGER,
+            issued_by_name VARCHAR(255),
+            revoked_by INTEGER,
+            revoked_by_name VARCHAR(255),
+            revoked_at TIMESTAMPTZ,
+            revocation_reason TEXT,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ
+          );
+
+          CREATE TABLE IF NOT EXISTS notifications (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER,
+            title VARCHAR(255),
+            message TEXT,
+            notification_type VARCHAR(50) DEFAULT 'info',
+            is_read BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+          );
+
+          CREATE TABLE IF NOT EXISTS audit_logs (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER,
+            user_email VARCHAR(255),
+            action VARCHAR(100),
+            entity_type VARCHAR(100),
+            entity_id INTEGER,
+            old_values JSONB,
+            new_values JSONB,
+            ip_address VARCHAR(100),
+            created_at TIMESTAMPTZ DEFAULT NOW()
+          );
+
           CREATE TABLE IF NOT EXISTS subject_courses (
             id SERIAL PRIMARY KEY,
             title VARCHAR(255) NOT NULL,
@@ -463,6 +646,11 @@ class InMemoryDatabase {
             course_type VARCHAR(50),
             slot VARCHAR(50),
             faculty_name VARCHAR(255),
+            faculty_id INTEGER,
+            faculty_email VARCHAR(255),
+            requirement_description TEXT,
+            applies_to VARCHAR(50),
+            category_key VARCHAR(50),
             is_elective BOOLEAN DEFAULT FALSE,
             is_active BOOLEAN DEFAULT TRUE,
             created_at TIMESTAMPTZ DEFAULT NOW()
