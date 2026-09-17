@@ -465,9 +465,6 @@ export const AdminProfilePage: React.FC = () => {
                     {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
-                <p className="text-[11px] text-slate-500">
-                  Optional verification: default was <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-700 font-mono text-[10px]">RamyaSasurie@123</code>
-                </p>
               </div>
 
               {/* New Password */}

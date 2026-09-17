@@ -3,41 +3,15 @@
     {
       "id": 1,
       "email": "ramya@sasurie.edu",
-      "password_hash": "cf379b4b9ce24f3a75d3e6e55cef4a6639c51591c096e64d41f01984a9a2c775",
+      "password_hash": "1c7bed777acf358fadf12c8e371c1816a05044d6168c9efb1a0444c7645537ac",
       "role": "ADMIN",
       "is_active": true,
       "is_registered": true,
       "created_at": "2026-09-09T07:28:18.693Z",
-      "updated_at": "2026-09-13T11:51:29.854Z",
+      "updated_at": "2026-09-17T15:29:47.375Z",
       "department_id": null,
       "full_name": "Dr. T. Senthilvel (Principal / Admin)",
       "username": "ramya"
-    },
-    {
-      "id": 2,
-      "email": "ramyacse23@sasurie.com",
-      "password_hash": "cf379b4b9ce24f3a75d3e6e55cef4a6639c51591c096e64d41f01984a9a2c775",
-      "role": "ADMIN",
-      "is_active": true,
-      "is_registered": true,
-      "created_at": "2026-09-10T04:09:19.799Z",
-      "updated_at": null,
-      "department_id": null,
-      "full_name": "Dr. T. Senthilvel (Principal / Admin)",
-      "username": "ramyacse23"
-    },
-    {
-      "id": 3,
-      "email": "admin@sasurie.edu",
-      "password_hash": "cf379b4b9ce24f3a75d3e6e55cef4a6639c51591c096e64d41f01984a9a2c775",
-      "role": "ADMIN",
-      "is_active": true,
-      "is_registered": true,
-      "created_at": "2026-09-10T04:09:19.799Z",
-      "updated_at": "2026-09-16T13:48:51.743Z",
-      "department_id": null,
-      "full_name": "Dr. T. Senthilvel (Principal / Admin)",
-      "username": "super_admin_2026"
     },
     {
       "id": 4,
@@ -933,30 +907,6 @@
       "department_id": null
     },
     {
-      "id": 89,
-      "email": "admin@college.edu",
-      "password_hash": "cf379b4b9ce24f3a75d3e6e55cef4a6639c51591c096e64d41f01984a9a2c775",
-      "role": "ADMIN",
-      "is_active": true,
-      "is_registered": true,
-      "created_at": "2026-09-12T07:42:09.871Z",
-      "updated_at": null,
-      "department_id": null,
-      "full_name": "Dr. T. Senthilvel (Principal / Admin)",
-      "username": "admin"
-    },
-    {
-      "id": 90,
-      "email": "admin@institution.edu",
-      "password_hash": "cf379b4b9ce24f3a75d3e6e55cef4a6639c51591c096e64d41f01984a9a2c775",
-      "role": "ADMIN",
-      "is_active": true,
-      "is_registered": true,
-      "created_at": "2026-09-12T07:42:09.914Z",
-      "updated_at": null,
-      "department_id": null
-    },
-    {
       "id": 91,
       "email": "hod.cse@college.edu",
       "password_hash": "0799662e21c5cf2789dd898fe78fc5af8305d48ff11429b37a35ac7dd12bd5f7",
@@ -1404,17 +1354,6 @@
       "created_at": "2026-09-16T06:37:39.671Z"
     },
     {
-      "id": 132,
-      "email": "monishas0707@gmail.com",
-      "username": "monisha_admin",
-      "full_name": "Monisha S (Administrator)",
-      "password_hash": "cf379b4b9ce24f3a75d3e6e55cef4a6639c51591c096e64d41f01984a9a2c775",
-      "role": "ADMIN",
-      "is_active": true,
-      "is_registered": true,
-      "created_at": "2026-09-16T06:37:39.730Z"
-    },
-    {
       "id": 133,
       "email": "chithracse24@sasurie.com",
       "password_hash": "3c922db43f2c5383106c1c34ffe0e3934b265aabecacab9e36a0d28ef90359d2",
@@ -1422,6 +1361,22 @@
       "is_active": true,
       "is_registered": true,
       "created_at": "2026-09-16T13:33:11.744Z"
+    },
+    {
+      "id": 134,
+      "email": "r.verma@college.edu",
+      "password_hash": "f5805f10d6c89f440b2a926fd76c71a59f97215eb1c99fadcde6814bfe16b570",
+      "role": "HOD",
+      "is_active": true,
+      "created_at": "2026-09-17T15:29:54.720Z"
+    },
+    {
+      "id": 135,
+      "email": "ramesh.cse.incharge@sasurie.edu",
+      "password_hash": "f5805f10d6c89f440b2a926fd76c71a59f97215eb1c99fadcde6814bfe16b570",
+      "role": "HOD",
+      "is_active": true,
+      "created_at": "2026-09-17T15:30:05.609Z"
     }
   ],
   "departments": [
@@ -3567,6 +3522,28 @@
       "created_at": "2026-09-14T10:24:54.716Z",
       "subject_term": "Sports & Games",
       "is_active": true
+    },
+    {
+      "id": 59,
+      "user_id": 134,
+      "employee_id": "EMP-OFF-220",
+      "full_name": "Dr. R. Verma",
+      "email": "r.verma@college.edu",
+      "phone": "+91 98765 43210",
+      "department_id": 1,
+      "designation": "HOD & Clearance Incharge",
+      "created_at": "2026-09-17T15:29:54.720Z"
+    },
+    {
+      "id": 60,
+      "user_id": 135,
+      "employee_id": "EMP-OFF-991",
+      "full_name": "Dr. K. Ramesh",
+      "email": "ramesh.cse.incharge@sasurie.edu",
+      "phone": "+91 98765 43210",
+      "department_id": 1,
+      "designation": "HOD & Clearance Incharge",
+      "created_at": "2026-09-17T15:30:05.609Z"
     }
   ],
   "dueRecords": [],
@@ -7745,6 +7722,72 @@
     }
   ],
   "auditLogs": [
+    {
+      "id": 628,
+      "user_id": 135,
+      "user_email": "ramesh.cse.incharge@sasurie.edu",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 135,
+      "new_values": "{\"identifier\":\"EMP-OFF-991\",\"role\":\"HOD\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-17T15:30:05.729Z"
+    },
+    {
+      "id": 627,
+      "user_id": 1,
+      "user_email": "ramya@sasurie.edu",
+      "action": "STAFF_CREATED",
+      "entity_type": "STAFF",
+      "entity_id": 60,
+      "new_values": "{\"employee_id\":\"EMP - OFF - 991\",\"full_name\":\"Dr. K. Ramesh\",\"email\":\"ramesh.cse.incharge@sasurie.edu\",\"password\":\"StaffPassword@123\",\"phone\":\"+91 98765 43210\",\"department_id\":1,\"designation\":\"HOD & Clearance Incharge\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-17T15:30:05.662Z"
+    },
+    {
+      "id": 626,
+      "user_id": 1,
+      "user_email": "ramya@sasurie.edu",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 1,
+      "new_values": "{\"identifier\":\"ramya\",\"role\":\"ADMIN\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-17T15:30:05.582Z"
+    },
+    {
+      "id": 625,
+      "user_id": 1,
+      "user_email": "ramya@sasurie.edu",
+      "action": "STAFF_CREATED",
+      "entity_type": "STAFF",
+      "entity_id": 59,
+      "new_values": "{\"employee_id\":\"EMP - OFF - 220\",\"full_name\":\"Dr. R. Verma\",\"email\":\"r.verma@college.edu\",\"password\":\"StaffPassword@123\",\"phone\":\"+91 98765 43210\",\"department_id\":1,\"designation\":\"HOD & Clearance Incharge\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-17T15:29:54.765Z"
+    },
+    {
+      "id": 624,
+      "user_id": 1,
+      "user_email": "ramya@sasurie.edu",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 1,
+      "new_values": "{\"identifier\":\"ramya\",\"role\":\"ADMIN\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-17T15:29:54.703Z"
+    },
+    {
+      "id": 623,
+      "user_id": 1,
+      "user_email": "ramya@sasurie.edu",
+      "action": "PASSWORD_RESET",
+      "entity_type": "USER",
+      "entity_id": 1,
+      "new_values": "{\"identifier\":\"ramya\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-17T15:29:47.382Z"
+    },
     {
       "id": 622,
       "user_id": 89,
@@ -29539,19 +29582,19 @@
     }
   ],
   "nextId": {
-    "users": 133,
+    "users": 135,
     "departments": 19,
     "courses": 12,
     "dueCategories": 6,
-    "students": 66,
-    "staff": 59,
+    "students": 67,
+    "staff": 60,
     "dueRecords": 1,
     "duePayments": 1,
-    "noDueRequests": 10,
+    "noDueRequests": 11,
     "noDueApprovals": 58,
     "certificates": 13,
     "notifications": 193,
-    "auditLogs": 623,
+    "auditLogs": 629,
     "subjectCourses": 1034
   }
 }

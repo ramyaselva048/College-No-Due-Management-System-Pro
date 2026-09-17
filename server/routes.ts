@@ -3474,22 +3474,28 @@ apiRouter.delete('/admin/students/:id', authMiddleware, requireRole(['ADMIN']), 
 
 apiRouter.get('/admin/staff', authMiddleware, requireRole(['ADMIN']), (req: AuthRequest, res: Response) => {
   let staffList = db.staff;
-  if (req.query.department_id) {
+  if (req.query.department_id && req.query.department_id !== 'ALL' && req.query.department_id !== 'all') {
     staffList = staffList.filter(s => s.department_id === Number(req.query.department_id));
   }
   const search = (req.query.search as string || '').toLowerCase().trim();
   if (search) {
     staffList = staffList.filter(s =>
-      s.full_name.toLowerCase().includes(search) ||
-      s.employee_id.toLowerCase().includes(search) ||
-      s.email.toLowerCase().includes(search)
+      (s.full_name && s.full_name.toLowerCase().includes(search)) ||
+      (s.employee_id && s.employee_id.toLowerCase().includes(search)) ||
+      (s.email && s.email.toLowerCase().includes(search)) ||
+      (s.designation && s.designation.toLowerCase().includes(search))
     );
   }
 
-  const total = staffList.length;
+  // Always sort newest officers first so any newly enrolled officer appears right at the top
+  const sorted = staffList.slice().sort((a, b) => b.id - a.id);
+
+  const total = sorted.length;
   const skip = Number(req.query.skip) || 0;
-  const limit = Number(req.query.limit) || 50;
-  const paginated = staffList.slice(skip, skip + limit);
+  const hasLimit = req.query.limit !== undefined && req.query.limit !== '' && !isNaN(Number(req.query.limit));
+  const paginated = hasLimit
+    ? sorted.slice(skip, skip + Number(req.query.limit))
+    : (skip > 0 ? sorted.slice(skip) : sorted);
 
   const result = paginated.map(st => {
     const user = db.users.find(u => u.id === st.user_id);
@@ -3524,11 +3530,11 @@ apiRouter.post('/admin/staff', authMiddleware, requireRole(['ADMIN']), (req: Aut
     custom_department_code,
     designation
   } = req.body;
-  const upperEmp = (employee_id || '').toUpperCase().trim();
+  const upperEmp = (employee_id || '').toUpperCase().trim().replace(/\s*-\s*/g, '-');
   if (!upperEmp) {
     return res.status(400).json({ detail: 'Employee ID is required' });
   }
-  if (db.staff.some(s => s.employee_id.toUpperCase() === upperEmp)) {
+  if (db.staff.some(s => s.employee_id.toUpperCase().replace(/\s*-\s*/g, '-') === upperEmp)) {
     return res.status(400).json({ detail: 'Employee ID already exists' });
   }
 
@@ -3600,6 +3606,10 @@ apiRouter.post('/admin/staff', authMiddleware, requireRole(['ADMIN']), (req: Aut
     created_at: now
   };
   db.staff.push(newStaff);
+
+  // Persist to file and queue sync to postgres
+  db.saveToFile();
+  db.queueSyncToPostgres();
 
   db.logAudit(req.user!.id, req.user!.email, 'STAFF_CREATED', 'STAFF', newStaff.id, null, req.body, getClientIp(req));
 
@@ -3726,6 +3736,9 @@ apiRouter.patch('/admin/staff/:id/status', authMiddleware, requireRole(['ADMIN']
   if (!u) return res.status(404).json({ detail: 'User account not found' });
 
   u.is_active = req.body.is_active !== undefined ? req.body.is_active : !u.is_active;
+
+  db.saveToFile();
+  db.queueSyncToPostgres();
 
   db.logAudit(req.user!.id, req.user!.email, 'STAFF_STATUS_TOGGLED', 'STAFF', st.id, null, { is_active: u.is_active }, getClientIp(req));
   res.json({

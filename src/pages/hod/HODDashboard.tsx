@@ -7,14 +7,9 @@ import {
   Clock,
   Users,
   UserCheck,
-  Award,
   ArrowRight,
-  ShieldCheck,
   AlertCircle,
   FileCheck2,
-  PlusCircle,
-  Sparkles,
-  Layers,
   ChevronRight,
   Eye
 } from 'lucide-react';
@@ -217,37 +212,6 @@ export const HODDashboard: React.FC = () => {
             <Link to="/hod/requests" className="text-rose-600 hover:underline font-semibold">
               Sign Off &rarr;
             </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* Role Notice: How HOD Allocation Controls Clearance */}
-      <div className="bg-linear-to-r from-amber-50 to-orange-50 border border-amber-200/80 rounded-2xl p-5 shadow-2xs">
-        <div className="flex items-start gap-3">
-          <div className="p-2 bg-amber-500 text-white rounded-xl shadow-xs shrink-0 mt-0.5">
-            <Sparkles className="w-5 h-5" />
-          </div>
-          <div className="flex-1">
-            <h3 className="text-sm font-bold text-amber-950">
-              HOD Clearance Control Architecture
-            </h3>
-            <p className="text-xs text-amber-800/90 mt-1 leading-relaxed">
-              As the Head of Department, only clearance nodes (Theory Subjects & Practical Labs) allocated by you for each semester will be required for students of <strong>{data.department.code}</strong>. The faculty members you assign to each subject are authorized to review and clear subject dues. Once all subject in-charges clear their nodes, the form arrives here for your official <strong>HOD Endorsement</strong>.
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Link
-                to="/hod/curriculum"
-                className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg shadow-2xs inline-flex items-center gap-1"
-              >
-                Configure Year & Semester Clearance Nodes &rarr;
-              </Link>
-              <Link
-                to="/hod/staff-dues"
-                className="px-3 py-1.5 bg-white border border-amber-300 hover:bg-amber-100 text-amber-900 text-xs font-semibold rounded-lg shadow-2xs inline-flex items-center gap-1"
-              >
-                Manage Staff Assignments
-              </Link>
-            </div>
           </div>
         </div>
       </div>

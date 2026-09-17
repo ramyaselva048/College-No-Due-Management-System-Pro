@@ -19,7 +19,8 @@ import {
   ToggleRight,
   LayoutGrid,
   List,
-  Sparkles
+  Sparkles,
+  RotateCcw
 } from 'lucide-react';
 import api from '../../services/api';
 import { StaffProfile, Department } from '../../types';
@@ -141,7 +142,11 @@ export const AdminStaffPage: React.FC = () => {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.employee_id.trim() || !formData.full_name.trim() || !formData.email.trim()) {
+    const cleanEmpId = formData.employee_id.trim().toUpperCase().replace(/\s*-\s*/g, '-');
+    const cleanFullName = formData.full_name.trim();
+    const cleanEmail = formData.email.trim();
+
+    if (!cleanEmpId || !cleanFullName || !cleanEmail) {
       setError('Employee ID, Full Name, and Email are required.');
       return;
     }
@@ -158,10 +163,10 @@ export const AdminStaffPage: React.FC = () => {
     setError(null);
 
     try {
-      await api.post('/admin/staff', {
-        employee_id: formData.employee_id.trim().toUpperCase(),
-        full_name: formData.full_name.trim(),
-        email: formData.email.trim(),
+      const res = await api.post('/admin/staff', {
+        employee_id: cleanEmpId,
+        full_name: cleanFullName,
+        email: cleanEmail,
         password: formData.password,
         phone: formData.phone.trim(),
         department_id: formData.is_custom_dept ? -1 : formData.department_id,
@@ -171,7 +176,15 @@ export const AdminStaffPage: React.FC = () => {
       });
 
       setIsModalOpen(false);
-      showToast(`Clearance Officer "${formData.full_name}" successfully enrolled!`);
+      // Reset search and department filter so the newly enrolled officer is immediately visible at the top
+      setSearch('');
+      setSelectedDeptFilter('ALL');
+
+      if (res.data && res.data.id) {
+        setStaffList((prev) => [res.data, ...prev.filter((s) => s.id !== res.data.id)]);
+      }
+
+      showToast(`Clearance Officer "${cleanFullName}" (${cleanEmpId}) successfully enrolled and saved!`);
       await fetchData();
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to create clearance officer');
@@ -329,6 +342,15 @@ export const AdminStaffPage: React.FC = () => {
               <List className="w-3.5 h-3.5" />
             </button>
           </div>
+
+          <button
+            onClick={() => fetchData()}
+            disabled={loading}
+            title="Refresh list"
+            className="p-2 border border-slate-200 rounded-xl bg-white text-slate-600 hover:text-indigo-600 hover:bg-slate-50 transition-colors shadow-2xs disabled:opacity-50"
+          >
+            <RotateCcw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+          </button>
 
           <button
             onClick={openCreateModal}
@@ -723,21 +745,46 @@ export const AdminStaffPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-slate-100 flex justify-end gap-2.5">
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
                 <button
                   type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800"
+                  onClick={() => {
+                    const defaultDept = departments[0]?.id || 1;
+                    const randomEmpNum = Math.floor(100 + Math.random() * 900);
+                    setFormData({
+                      employee_id: `EMP-OFF-${randomEmpNum}`,
+                      full_name: '',
+                      email: '',
+                      password: 'StaffPassword@123',
+                      phone: '',
+                      department_id: defaultDept,
+                      designation: 'HOD & Clearance Incharge',
+                      is_custom_dept: false,
+                      custom_department_name: '',
+                      custom_department_code: ''
+                    });
+                    setError(null);
+                  }}
+                  className="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors inline-flex items-center gap-1 font-medium"
                 >
-                  Cancel
+                  <RotateCcw className="w-3 h-3" /> Reset Fields
                 </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition-colors disabled:opacity-50 inline-flex items-center gap-1.5"
-                >
-                  {submitting ? 'Enrolling...' : 'Save & Enroll Officer'}
-                </button>
+                <div className="flex items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition-colors disabled:opacity-50 inline-flex items-center gap-1.5"
+                  >
+                    {submitting ? 'Enrolling...' : 'Save & Enroll Officer'}
+                  </button>
+                </div>
               </div>
             </form>
           </div>
