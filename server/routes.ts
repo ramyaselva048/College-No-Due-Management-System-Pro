@@ -536,46 +536,6 @@ apiRouter.post('/auth/reset-password/request', async (req: Request, res: Respons
   });
 });
 
-// Direct Admin Password Reset endpoint
-apiRouter.post('/auth/reset-password/direct', (req: Request, res: Response) => {
-  const email = (req.body.email || '').toString().trim().toLowerCase();
-  const newPassword = (req.body.new_password || req.body.password || '').toString().trim();
-
-  if (!email) {
-    return res.status(400).json({ detail: 'Admin email is required.' });
-  }
-
-  if (!newPassword || newPassword.length < 6) {
-    return res.status(400).json({ detail: 'New password must be at least 6 characters long.' });
-  }
-
-  const user = db.users.find(u => u.email.toLowerCase() === email && u.role === 'ADMIN');
-  if (!user) {
-    return res.status(404).json({ detail: 'No active Administrator account found with this email address.' });
-  }
-
-  user.password_hash = hashPassword(newPassword);
-  user.updated_at = new Date().toISOString();
-  db.saveToFile();
-  db.queueSyncToPostgres();
-
-  db.logAudit(
-    user.id,
-    user.email,
-    'PASSWORD_RESET_DIRECT',
-    'USER',
-    user.id,
-    null,
-    { email: user.email },
-    getClientIp(req)
-  );
-
-  return res.json({
-    success: true,
-    message: `Password has been reset successfully for ${user.email}. You can now log in with your new password.`
-  });
-});
-
 // 2. Check token / request status
 apiRouter.get('/auth/reset-password/verify-token', (req: Request, res: Response) => {
   const token = (req.query.token as string || '').trim();
