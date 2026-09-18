@@ -1,11 +1,14 @@
 import 'dotenv/config';
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
 import { apiRouter } from './server/routes';
 import { db } from './server/db';
 
-const PORT = Number(process.env.PORT) || 3000;
+// In Google AI Studio, port 3000 is required by the reverse proxy.
+// When deployed on Render / Railway, process.env.PORT will be used automatically.
+const PORT = process.env.APPLET_ID ? 3000 : (Number(process.env.PORT) || 3000);
 
 async function startServer() {
   // Initialize connection and sync with PostgreSQL
@@ -50,6 +53,22 @@ async function startServer() {
       appType: 'spa',
     });
     app.use(vite.middlewares);
+
+    // Guaranteed SPA fallback for deep routes (such as /reset-password) in development
+    app.use('*', async (req, res, next) => {
+      if (req.originalUrl.startsWith('/api')) {
+        return next();
+      }
+      try {
+        const url = req.originalUrl;
+        const indexPath = path.resolve(process.cwd(), 'index.html');
+        let template = fs.readFileSync(indexPath, 'utf-8');
+        template = await vite.transformIndexHtml(url, template);
+        res.status(200).set({ 'Content-Type': 'text/html' }).end(template);
+      } catch (e) {
+        next(e);
+      }
+    });
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));

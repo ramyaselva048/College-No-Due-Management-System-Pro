@@ -248,6 +248,20 @@ export interface AuditLogRecord {
   created_at: string;
 }
 
+export interface PasswordResetRequestRecord {
+  id: string;
+  email: string;
+  user_id: number;
+  token: string;
+  code: string;
+  status: 'PENDING' | 'ACCEPTED' | 'COMPLETED' | 'EXPIRED';
+  created_at: string;
+  expires_at: string;
+  accepted_at?: string;
+  completed_at?: string;
+  ip_address?: string;
+}
+
 export function isAcademicDepartment(dept: DepartmentRecord, courses: CourseRecord[] = []): boolean {
   if (dept.type === 'ACADEMIC' || dept.category === 'academic') return true;
   if (dept.type === 'INSTITUTIONAL' || dept.category === 'institutional') return false;
@@ -368,6 +382,7 @@ class InMemoryDatabase {
   notifications: NotificationRecord[] = [];
   auditLogs: AuditLogRecord[] = [];
   subjectCourses: SubjectCourseRecord[] = [];
+  passwordResetRequests: PasswordResetRequestRecord[] = [];
 
   nextId = {
     users: 1,
@@ -650,6 +665,20 @@ class InMemoryDatabase {
           ALTER TABLE no_due_requests ADD COLUMN IF NOT EXISTS labs JSONB;
           ALTER TABLE no_due_requests ADD COLUMN IF NOT EXISTS signatories JSONB;
           ALTER TABLE no_due_requests ADD COLUMN IF NOT EXISTS common_nodes JSONB;
+
+          CREATE TABLE IF NOT EXISTS password_reset_requests (
+            id VARCHAR(64) PRIMARY KEY,
+            email VARCHAR(255) NOT NULL,
+            user_id INTEGER,
+            token VARCHAR(255) UNIQUE NOT NULL,
+            code VARCHAR(16) NOT NULL,
+            status VARCHAR(32) NOT NULL DEFAULT 'PENDING',
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            expires_at TIMESTAMPTZ,
+            accepted_at TIMESTAMPTZ,
+            completed_at TIMESTAMPTZ,
+            ip_address VARCHAR(100)
+          );
         `).catch(e => console.warn('[PostgreSQL] schema migration check:', e?.message));
 
         clearTableColumnCache();
@@ -884,6 +913,7 @@ class InMemoryDatabase {
         notifications: this.notifications,
         auditLogs: this.auditLogs,
         subjectCourses: this.subjectCourses,
+        passwordResetRequests: this.passwordResetRequests,
         nextId: this.nextId
       };
       const jsonContent = JSON.stringify(data, null, 2);
@@ -937,6 +967,7 @@ class InMemoryDatabase {
           this.notifications = Array.isArray(data.notifications) ? data.notifications : [];
           this.auditLogs = Array.isArray(data.auditLogs) ? data.auditLogs : [];
           this.subjectCourses = Array.isArray(data.subjectCourses) ? data.subjectCourses : [];
+          this.passwordResetRequests = Array.isArray(data.passwordResetRequests) ? data.passwordResetRequests : [];
           if (data.nextId) {
             this.nextId = { ...this.nextId, ...data.nextId };
           }
@@ -1237,38 +1268,50 @@ class InMemoryDatabase {
   }
 
   ensureAdminsExist() {
-    // Check if an active administrator already exists
-    const adminUsers = this.users.filter(u => u.role === 'ADMIN');
-    if (adminUsers.length > 0) {
-      // Prioritize the admin that has been updated or active
-      const primaryAdmin = adminUsers.find(u => u.updated_at) || adminUsers[0];
-      if (!primaryAdmin.username) {
-        primaryAdmin.username = primaryAdmin.email.split('@')[0];
+    const defaultAdmins = [
+      {
+        email: 'monishas0707@gmail.com',
+        username: 'monishas0707',
+        full_name: 'Admin Monisha',
+        defaultPass: 'RamyaSasurie@123'
+      },
+      {
+        email: 'ramyaselva048@gmail.com',
+        username: 'ramyaselva',
+        full_name: 'Dr. T. Senthilvel (Principal / Admin)',
+        defaultPass: 'AdminPassword123'
+      },
+      {
+        email: 'admin@college.edu',
+        username: 'admin',
+        full_name: 'Principal Administrator',
+        defaultPass: 'RamyaSasurie@123'
       }
-      if (!primaryAdmin.full_name) {
-        primaryAdmin.full_name = 'Dr. T. Senthilvel (Principal / Admin)';
-      }
-      primaryAdmin.is_active = true;
-      primaryAdmin.is_registered = true;
+    ];
 
-      // Keep only this single authoritative administrator so no duplicate admin accounts hold old passwords or usernames
-      this.users = this.users.filter(u => u.role !== 'ADMIN' || u.id === primaryAdmin.id);
-      return;
+    for (const def of defaultAdmins) {
+      const existing = this.users.find(u => u.email.toLowerCase() === def.email.toLowerCase());
+      if (existing) {
+        existing.role = 'ADMIN';
+        existing.is_active = true;
+        existing.is_registered = true;
+        if (!existing.username) existing.username = def.username;
+        if (!existing.full_name) existing.full_name = def.full_name;
+      } else {
+        const nextId = Math.max(0, ...this.users.map(u => u.id)) + 1;
+        this.users.push({
+          id: nextId,
+          email: def.email,
+          username: def.username,
+          full_name: def.full_name,
+          password_hash: hashPassword(def.defaultPass),
+          role: 'ADMIN',
+          is_active: true,
+          is_registered: true,
+          created_at: new Date().toISOString()
+        });
+      }
     }
-
-    // Default admin account for fresh installation
-    const nextId = Math.max(0, ...this.users.map(u => u.id)) + 1;
-    this.users.push({
-      id: nextId,
-      email: 'admin@college.edu',
-      username: 'admin',
-      full_name: 'Dr. T. Senthilvel (Principal / Admin)',
-      password_hash: hashPassword('RamyaSasurie@123'),
-      role: 'ADMIN',
-      is_active: true,
-      is_registered: true,
-      created_at: new Date().toISOString()
-    });
   }
 
   ensureHODsExist() {
@@ -1681,20 +1724,11 @@ class InMemoryDatabase {
     }
     this.students = uniqueStudents;
 
-    // 6. Deduplicate users by email and keep strictly one authoritative active admin
+    // 6. Deduplicate users by email
     const seenEmails = new Set<string>();
-    let seenAdmin = false;
     const uniqueUsers: UserRecord[] = [];
     for (const u of this.users) {
       const emailKey = (u.email || '').toLowerCase().trim();
-      if (u.role === 'ADMIN') {
-        if (!seenAdmin) {
-          seenAdmin = true;
-          if (emailKey) seenEmails.add(emailKey);
-          uniqueUsers.push(u);
-        }
-        continue;
-      }
       if (emailKey && !seenEmails.has(emailKey)) {
         seenEmails.add(emailKey);
         uniqueUsers.push(u);

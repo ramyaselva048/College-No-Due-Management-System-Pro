@@ -1,8 +1,9 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
-import { db, hashPassword, verifyPassword, createToken, verifyToken, testPgConnection, pgQuery, deleteRecordFromPostgres, UserRecord, StudentRecord, StaffRecord, DepartmentRecord, CourseRecord, SubjectCourseRecord, DueCategoryRecord, CertificateRecord, DueRecord, isAcademicDepartment, getApplicableDepartmentsForStudent } from './db';
+import { db, hashPassword, verifyPassword, createToken, verifyToken, testPgConnection, pgQuery, deleteRecordFromPostgres, UserRecord, StudentRecord, StaffRecord, DepartmentRecord, CourseRecord, SubjectCourseRecord, DueCategoryRecord, CertificateRecord, DueRecord, PasswordResetRequestRecord, isAcademicDepartment, getApplicableDepartmentsForStudent } from './db';
 import { DEPARTMENT_CURRICULUM_CATALOG, generateGenericSemesterSubjects } from './curriculum_catalog';
 import { generateCertificatePdf } from './pdf';
+import { sendPasswordResetEmail, isSmtpConfigured } from './email';
 
 export const apiRouter = Router();
 
@@ -397,12 +398,323 @@ apiRouter.post('/auth/login', (req: Request, res: Response) => {
   });
 });
 
+// -------------------------------------------------------------
+// SECURE PASSWORD RESET REQUEST & EMAIL VERIFICATION WORKFLOW
+// -------------------------------------------------------------
+
+// 1. Initiate password reset request for Admin Email
+apiRouter.post('/auth/reset-password/request', async (req: Request, res: Response) => {
+  const emailInput = (req.body.email || req.body.identifier || '').toString().trim().toLowerCase();
+
+  if (!emailInput) {
+    return res.status(400).json({ detail: 'Please provide your registered Admin Email address.' });
+  }
+
+  // Find admin user by email or username
+  const adminUser = db.users.find(u => 
+    (u.email.toLowerCase() === emailInput || (u.username && u.username.toLowerCase() === emailInput)) &&
+    u.role === 'ADMIN'
+  );
+
+  if (!adminUser) {
+    return res.status(404).json({
+      detail: `No active Administrator account found with email: "${emailInput}". Please check the spelling or contact college support.`
+    });
+  }
+
+  // Generate secure token & 6-digit approval code
+  const token = crypto.randomBytes(24).toString('hex');
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  const requestId = `pr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString(); // 30 minutes
+
+  // Invalidate any previous pending requests for this admin
+  db.passwordResetRequests.forEach(r => {
+    if (r.email.toLowerCase() === adminUser.email.toLowerCase() && r.status === 'PENDING') {
+      r.status = 'EXPIRED';
+    }
+  });
+
+  const resetReq: PasswordResetRequestRecord = {
+    id: requestId,
+    email: adminUser.email,
+    user_id: adminUser.id,
+    token,
+    code,
+    status: 'PENDING',
+    created_at: new Date().toISOString(),
+    expires_at: expiresAt,
+    ip_address: getClientIp(req)
+  };
+
+  db.passwordResetRequests.unshift(resetReq);
+  db.saveToFile();
+
+  let publicOrigin = (req.body?.client_origin as string) || '';
+  if (publicOrigin && (publicOrigin.includes('localhost') || publicOrigin.includes('127.0.0.1'))) {
+    publicOrigin = '';
+  }
+
+  if (!publicOrigin && process.env.APP_URL && !process.env.APP_URL.includes('localhost')) {
+    publicOrigin = process.env.APP_URL;
+  }
+
+  if (!publicOrigin && req.headers['x-forwarded-host']) {
+    const fHost = req.headers['x-forwarded-host'] as string;
+    if (!fHost.includes('localhost')) {
+      const fProto = (req.headers['x-forwarded-proto'] as string) || 'https';
+      publicOrigin = `${fProto}://${fHost}`;
+    }
+  }
+
+  if (!publicOrigin && req.headers.origin && !req.headers.origin.includes('localhost')) {
+    publicOrigin = req.headers.origin;
+  }
+
+  if (!publicOrigin && req.headers.referer) {
+    try {
+      const refUrl = new URL(req.headers.referer);
+      if (!refUrl.hostname.includes('localhost')) {
+        publicOrigin = refUrl.origin;
+      }
+    } catch {}
+  }
+
+  if (!publicOrigin) {
+    publicOrigin = 'https://ais-dev-j4wgwtycomtyf3ojaonmgz-844489870051.asia-southeast1.run.app';
+  }
+
+  publicOrigin = publicOrigin.replace(/\/$/, '');
+  const resetUrl = `${publicOrigin}/reset-password?token=${token}`;
+
+  // Dispatch email
+  const emailResult = await sendPasswordResetEmail({
+    to: adminUser.email,
+    adminName: adminUser.full_name || 'Administrator',
+    resetUrl,
+    approvalCode: code
+  });
+
+  db.logAudit(
+    adminUser.id,
+    adminUser.email,
+    'PASSWORD_RESET_REQUESTED',
+    'USER',
+    adminUser.id,
+    null,
+    { email: adminUser.email, requestId },
+    getClientIp(req)
+  );
+
+  return res.json({
+    success: true,
+    message: `Password reset request has been dispatched to ${adminUser.email}. You must enter the 6-digit approval code from your email to set a new password.`,
+    requestId,
+    email: adminUser.email,
+    expires_at: expiresAt,
+    is_smtp_configured: isSmtpConfigured()
+  });
+});
+
+// 2. Check token / request status
+apiRouter.get('/auth/reset-password/verify-token', (req: Request, res: Response) => {
+  const token = (req.query.token as string || '').trim();
+  const code = (req.query.code as string || '').trim();
+  const requestId = (req.query.requestId as string || '').trim();
+
+  if (!token && !code && !requestId) {
+    return res.status(400).json({ detail: 'Token, code, or request ID required.' });
+  }
+
+  const found = db.passwordResetRequests.find(r => 
+    (token && r.token === token) ||
+    (code && r.code === code) ||
+    (requestId && r.id === requestId)
+  );
+
+  if (!found) {
+    return res.status(404).json({ detail: 'Reset request not found or invalid.' });
+  }
+
+  if (new Date(found.expires_at) < new Date() && found.status === 'PENDING') {
+    found.status = 'EXPIRED';
+    db.saveToFile();
+  }
+
+  return res.json({
+    valid: found.status !== 'EXPIRED' && found.status !== 'COMPLETED',
+    status: found.status,
+    email: found.email,
+    token: found.token,
+    requestId: found.id,
+    is_accepted: found.status === 'ACCEPTED',
+    expires_at: found.expires_at
+  });
+});
+
+// 3. Accept reset request (must be called before password can be updated)
+apiRouter.post('/auth/reset-password/accept', (req: Request, res: Response) => {
+  const token = (req.body.token || '').toString().trim();
+  const code = (req.body.code || '').toString().trim();
+  const requestId = (req.body.requestId || '').toString().trim();
+  const email = (req.body.email || '').toString().trim().toLowerCase();
+
+  let found = null;
+  if (code) {
+    // Look up by matching 6-digit code
+    found = db.passwordResetRequests.find(r => 
+      r.code === code && 
+      r.status !== 'COMPLETED' &&
+      (!requestId || r.id === requestId) &&
+      (!email || r.email.toLowerCase() === email)
+    );
+    if (!found) {
+      return res.status(400).json({ detail: 'Invalid approval code. Please check your email and enter the correct 6-digit code.' });
+    }
+  } else if (token) {
+    found = db.passwordResetRequests.find(r => r.token === token && r.status !== 'COMPLETED');
+    if (!found) {
+      return res.status(400).json({ detail: 'Invalid or expired password reset link.' });
+    }
+  } else {
+    return res.status(400).json({ detail: 'Please enter the 6-digit approval code sent to your email.' });
+  }
+
+  if (new Date(found.expires_at) < new Date()) {
+    found.status = 'EXPIRED';
+    db.saveToFile();
+    return res.status(400).json({ detail: 'This reset request has expired. Please initiate a new request.' });
+  }
+
+  if (found.status === 'COMPLETED') {
+    return res.status(400).json({ detail: 'This reset request has already been completed.' });
+  }
+
+  found.status = 'ACCEPTED';
+  found.accepted_at = new Date().toISOString();
+  db.saveToFile();
+
+  db.logAudit(
+    found.user_id,
+    found.email,
+    'PASSWORD_RESET_ACCEPTED',
+    'USER',
+    found.user_id,
+    null,
+    { requestId: found.id },
+    getClientIp(req)
+  );
+
+  return res.json({
+    success: true,
+    message: 'Reset request accepted successfully. You can now set your new password.',
+    status: 'ACCEPTED',
+    token: found.token,
+    email: found.email
+  });
+});
+
+// 4. Confirm new password (only allowed IF status === 'ACCEPTED')
+apiRouter.post('/auth/reset-password/confirm', (req: Request, res: Response) => {
+  const token = (req.body.token || '').toString().trim();
+  const newPassword = (req.body.new_password || req.body.password || '').toString().trim();
+
+  if (!token) {
+    return res.status(400).json({ detail: 'Missing verification token.' });
+  }
+
+  if (!newPassword || newPassword.length < 6) {
+    return res.status(400).json({ detail: 'New password must be at least 6 characters long.' });
+  }
+
+  const found = db.passwordResetRequests.find(r => r.token === token);
+  if (!found) {
+    return res.status(404).json({ detail: 'Reset request not found or invalid token.' });
+  }
+
+  if (new Date(found.expires_at) < new Date()) {
+    found.status = 'EXPIRED';
+    db.saveToFile();
+    return res.status(400).json({ detail: 'This reset request has expired. Please request a new link.' });
+  }
+
+  // MANDATORY SECURITY CHECK: Request must be accepted!
+  if (found.status !== 'ACCEPTED') {
+    return res.status(403).json({
+      detail: 'Request pending approval. You must accept the password reset request sent to your email before setting a new password.'
+    });
+  }
+
+  const user = db.users.find(u => u.id === found.user_id || u.email.toLowerCase() === found.email.toLowerCase());
+  if (!user) {
+    return res.status(404).json({ detail: 'User account associated with this request was not found.' });
+  }
+
+  user.password_hash = hashPassword(newPassword);
+  user.updated_at = new Date().toISOString();
+  found.status = 'COMPLETED';
+  found.completed_at = new Date().toISOString();
+
+  db.saveToFile();
+  db.queueSyncToPostgres();
+
+  db.logAudit(
+    user.id,
+    user.email,
+    'PASSWORD_RESET_COMPLETED',
+    'USER',
+    user.id,
+    null,
+    { requestId: found.id },
+    getClientIp(req)
+  );
+
+  return res.json({
+    success: true,
+    message: 'Admin password successfully updated. You may now log in with your new password.',
+    email: user.email,
+    username: user.username
+  });
+});
+
 apiRouter.post('/auth/reset-password', (req: Request, res: Response) => {
+  const token = (req.body.token || '').toString().trim();
   const identifierField = (req.body.identifier || req.body.email || req.body.employee_id || req.body.register_number || req.body.username || '').toString().trim();
   const newPassword = (req.body.new_password || req.body.password || '').toString().trim();
 
+  // If token is provided, route through secure confirm workflow
+  if (token) {
+    const found = db.passwordResetRequests.find(r => r.token === token);
+    if (!found) {
+      return res.status(404).json({ detail: 'Invalid or expired reset token.' });
+    }
+    if (found.status !== 'ACCEPTED') {
+      return res.status(403).json({
+        detail: 'Request pending approval. You must accept the password reset request sent to your email before setting a new password.'
+      });
+    }
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ detail: 'New password must be at least 6 characters long.' });
+    }
+    const user = db.users.find(u => u.id === found.user_id || u.email.toLowerCase() === found.email.toLowerCase());
+    if (!user) return res.status(404).json({ detail: 'User not found.' });
+
+    user.password_hash = hashPassword(newPassword);
+    user.updated_at = new Date().toISOString();
+    found.status = 'COMPLETED';
+    found.completed_at = new Date().toISOString();
+    db.saveToFile();
+    db.queueSyncToPostgres();
+    return res.json({
+      success: true,
+      message: 'Password successfully updated. You must now sign in using your updated credentials.',
+      email: user.email,
+      username: user.username
+    });
+  }
+
   if (!identifierField) {
-    return res.status(400).json({ detail: 'Please provide your Username, Employee ID, Register Number, or College Email.' });
+    return res.status(400).json({ detail: 'Please provide your registered Admin Email.' });
   }
 
   if (!newPassword || newPassword.length < 6) {
@@ -426,7 +738,7 @@ apiRouter.post('/auth/reset-password', (req: Request, res: Response) => {
   }
 
   if (!user) {
-    return res.status(404).json({ detail: 'No registered account found matching this identifier. Please verify your Username, Employee ID, or Email.' });
+    return res.status(404).json({ detail: 'No registered account found matching this identifier. Please verify your Email.' });
   }
 
   user.password_hash = hashPassword(newPassword);

@@ -9,6 +9,7 @@ import { AppLayout } from './components/layout/AppLayout';
 // Public Pages
 import { LandingPage } from './pages/public/LandingPage';
 import { LoginPage } from './pages/auth/LoginPage';
+import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
 import { VerifyCertificatePage } from './pages/public/VerifyCertificatePage';
 import { PrintCertificatePage } from './pages/public/PrintCertificatePage';
 
@@ -55,6 +56,7 @@ export default function App() {
             {/* Public Routes */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/register" element={<Navigate to="/login" replace />} />
             <Route path="/signup" element={<Navigate to="/login" replace />} />
             <Route path="/verify" element={<VerifyCertificatePage />} />

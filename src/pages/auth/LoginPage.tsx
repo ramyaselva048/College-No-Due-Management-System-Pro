@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { GraduationCap, Lock, Mail, ArrowRight, AlertCircle, Eye, EyeOff, Building2, ShieldCheck, CheckCircle2, KeyRound, Shield, Check, X, User } from 'lucide-react';
+import { GraduationCap, Lock, Mail, ArrowRight, AlertCircle, Eye, EyeOff, Building2, ShieldCheck, CheckCircle2, KeyRound, Shield, Check, X, User, ExternalLink, Copy, HelpCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { UserRole } from '../../types';
 import { ThemeToggle } from '../../components/common/ThemeToggle';
@@ -29,12 +29,37 @@ export const LoginPage: React.FC = () => {
 
   // Reset Modal state
   const [showForgotModal, setShowForgotModal] = useState(false);
+  const [resetStep, setResetStep] = useState<'request' | 'verify' | 'password'>('request');
   const [resetIdentifier, setResetIdentifier] = useState('');
+  const [resetToken, setResetToken] = useState('');
+  const [resetCodeInput, setResetCodeInput] = useState('');
+  const [resetRequestInfo, setResetRequestInfo] = useState<{
+    email: string;
+    requestId: string;
+    is_smtp_configured: boolean;
+    preview_approval_url?: string;
+    preview_code?: string;
+  } | null>(null);
   const [resetNewPassword, setResetNewPassword] = useState('');
   const [resetConfirmPassword, setResetConfirmPassword] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
   const [resetError, setResetError] = useState<string | null>(null);
   const [resetSuccess, setResetSuccess] = useState<string | null>(null);
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [showSmtpGuide, setShowSmtpGuide] = useState(false);
+
+  const resetModalState = () => {
+    setShowForgotModal(false);
+    setResetStep('request');
+    setResetIdentifier('');
+    setResetToken('');
+    setResetCodeInput('');
+    setResetRequestInfo(null);
+    setResetNewPassword('');
+    setResetConfirmPassword('');
+    setResetError(null);
+    setResetSuccess(null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -318,27 +343,21 @@ export const LoginPage: React.FC = () => {
                       <KeyRound className="w-4 h-4" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-slate-900 dark:text-white">Reset Admin Credentials</h3>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400">Update admin password</p>
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-white">Admin Password Recovery</h3>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        {resetStep === 'request' && 'Email authorization request'}
+                        {resetStep === 'verify' && 'Accept request via email'}
+                        {resetStep === 'password' && 'Set new admin password'}
+                      </p>
                     </div>
                   </div>
                   <button
                     type="button"
-                    onClick={() => setShowForgotModal(false)}
+                    onClick={resetModalState}
                     className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                   >
                     <X className="w-4 h-4" />
                   </button>
-                </div>
-
-                <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 rounded-xl p-3 mb-4 text-[11px] text-amber-900 dark:text-amber-300 space-y-1">
-                  <p className="font-bold flex items-center gap-1.5">
-                    <Shield className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                    Strict Security Enforcement
-                  </p>
-                  <p className="leading-relaxed">
-                    Once reset, <strong>only the updated password</strong> will be accepted. Old passwords will be permanently rejected.
-                  </p>
                 </div>
 
                 {resetSuccess ? (
@@ -346,22 +365,20 @@ export const LoginPage: React.FC = () => {
                     <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs flex items-start gap-2.5">
                       <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                       <div className="space-y-1">
-                        <p className="font-bold">Credentials Reset Successfully!</p>
+                        <p className="font-bold">Password Reset Completed!</p>
                         <p className="text-[11px] leading-relaxed">{resetSuccess}</p>
                       </div>
                     </div>
                     <button
                       type="button"
-                      onClick={() => {
-                        setShowForgotModal(false);
-                        setResetSuccess(null);
-                      }}
+                      onClick={resetModalState}
                       className="w-full py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors cursor-pointer"
                     >
-                      Continue to Sign In
+                      Sign In with New Password
                     </button>
                   </div>
-                ) : (
+                ) : resetStep === 'request' ? (
+                  /* STEP 1: Enter current admin email */
                   <form
                     onSubmit={async (e) => {
                       e.preventDefault();
@@ -369,35 +386,34 @@ export const LoginPage: React.FC = () => {
                         setResetError('Please enter your current Admin Email.');
                         return;
                       }
-                      if (!resetNewPassword || resetNewPassword.length < 6) {
-                        setResetError('New password must be at least 6 characters long.');
-                        return;
-                      }
-                      if (resetNewPassword !== resetConfirmPassword) {
-                        setResetError('New password and confirm password do not match.');
-                        return;
-                      }
                       setResetLoading(true);
                       setResetError(null);
                       try {
-                        const res = await api.post('/auth/reset-password', {
-                          identifier: resetIdentifier.trim(),
-                          new_password: resetNewPassword
+                        const res = await api.post('/auth/reset-password/request', {
+                          email: resetIdentifier.trim(),
+                          client_origin: window.location.origin
                         });
-                        const updatedUser = res.data.username || res.data.email || resetIdentifier;
-                        setResetSuccess(
-                          `Admin password has been updated. You can now login using: "${updatedUser}" with your new password.`
-                        );
-                        setEmail(updatedUser);
-                        setPassword('');
+                        setResetRequestInfo(res.data);
+                        setResetToken('');
+                        setResetStep('verify');
                       } catch (err: any) {
-                        setResetError(err.response?.data?.detail || 'Failed to reset admin credentials. Please verify your current Admin Email.');
+                        setResetError(err.response?.data?.detail || 'No Administrator found with this email. Please verify your current Admin Email.');
                       } finally {
                         setResetLoading(false);
                       }
                     }}
                     className="space-y-3"
                   >
+                    <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 rounded-xl p-3 text-[11px] text-amber-900 dark:text-amber-300 space-y-1">
+                      <p className="font-bold flex items-center gap-1.5">
+                        <Shield className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                        Admin Approval Workflow
+                      </p>
+                      <p className="leading-relaxed">
+                        Enter your registered Admin Email. An authorization request will be sent. <strong>You must accept the request</strong> before your password can be reset.
+                      </p>
+                    </div>
+
                     {resetError && (
                       <div className="p-2.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-xl text-rose-700 dark:text-rose-300 text-[11px] flex items-center gap-2">
                         <AlertCircle className="w-3.5 h-3.5 shrink-0" />
@@ -409,15 +425,201 @@ export const LoginPage: React.FC = () => {
                       <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
                         Current Admin Email <span className="text-rose-500">*</span>
                       </label>
-                      <input
-                        type="email"
-                        required
-                        value={resetIdentifier}
-                        onChange={(e) => setResetIdentifier(e.target.value)}
-                        placeholder="e.g. admin@college.edu"
-                        className="w-full text-xs px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
-                      />
+                      <div className="relative">
+                        <input
+                          type="email"
+                          required
+                          value={resetIdentifier}
+                          onChange={(e) => setResetIdentifier(e.target.value)}
+                          placeholder="Enter your registered Admin email"
+                          className="w-full text-xs pl-8 pr-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
+                        />
+                        <Mail className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+                      </div>
                     </div>
+
+                    <div className="pt-2 flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={resetModalState}
+                        className="w-1/2 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={resetLoading || !resetIdentifier.trim()}
+                        className="w-1/2 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-indigo-600/20"
+                      >
+                        {resetLoading ? 'Sending...' : 'Send Request'}
+                      </button>
+                    </div>
+                  </form>
+                ) : resetStep === 'verify' ? (
+                  /* STEP 2: Enter 6-digit approval code sent to Gmail */
+                  <form
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      const cleanCode = resetCodeInput.trim();
+                      if (!cleanCode || cleanCode.length < 6) {
+                        setResetError('Please enter the complete 6-digit approval code.');
+                        return;
+                      }
+                      setResetLoading(true);
+                      setResetError(null);
+                      try {
+                        const res = await api.post('/auth/reset-password/accept', {
+                          code: cleanCode,
+                          requestId: resetRequestInfo?.requestId,
+                          email: resetIdentifier.trim()
+                        });
+                        if (res.data.token) {
+                          setResetToken(res.data.token);
+                        }
+                        setResetStep('password');
+                      } catch (err: any) {
+                        setResetError(err.response?.data?.detail || 'Invalid approval code. Please check your email and try again.');
+                      } finally {
+                        setResetLoading(false);
+                      }
+                    }}
+                    className="space-y-4"
+                  >
+                    {/* Status & Explanation Box */}
+                    <div className="p-3.5 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-900 rounded-2xl text-xs space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 text-indigo-700 dark:text-indigo-300 font-bold">
+                          <Mail className="w-4 h-4 text-indigo-600 shrink-0" />
+                          <span>Check Your Email</span>
+                        </div>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300 border border-amber-300 dark:border-amber-700">
+                          Code Required
+                        </span>
+                      </div>
+
+                      <div className="px-2.5 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-indigo-100 dark:border-indigo-900/60 font-mono text-xs font-bold text-indigo-700 dark:text-indigo-300 break-all">
+                        {resetRequestInfo?.email || resetIdentifier}
+                      </div>
+
+                      <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                        A 6-digit verification code has been sent to your Gmail inbox. Please enter the code below to proceed:
+                      </p>
+                    </div>
+
+                    {resetError && (
+                      <div className="p-3 bg-rose-50 dark:bg-rose-950/50 border border-rose-300 dark:border-rose-900 rounded-xl text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2 font-medium">
+                        <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+                        <span>{resetError}</span>
+                      </div>
+                    )}
+
+                    {/* 6-Digit Code Input */}
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 text-center">
+                        Enter 6-Digit Approval Code <span className="text-rose-500">*</span>
+                      </label>
+                      <div className="relative max-w-[240px] mx-auto">
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          maxLength={6}
+                          autoFocus
+                          required
+                          value={resetCodeInput}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                            setResetCodeInput(val);
+                            if (resetError) setResetError(null);
+                          }}
+                          placeholder="• • • • • •"
+                          className="w-full text-center tracking-[0.4em] font-mono text-xl font-extrabold py-2.5 px-3 border-2 border-indigo-300 dark:border-indigo-700 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-slate-600 focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-600 outline-none transition-all shadow-sm"
+                        />
+                      </div>
+                      <p className="text-[10.5px] text-slate-500 text-center">
+                        Code expires in 30 minutes. Check your spam folder if not in inbox.
+                      </p>
+                    </div>
+
+                    {/* Submit Button */}
+                    <button
+                      type="submit"
+                      disabled={resetLoading || resetCodeInput.length < 6}
+                      className="w-full py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl transition-all shadow-md shadow-indigo-600/25 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <ShieldCheck className="w-4 h-4" />
+                      {resetLoading ? 'Verifying Code...' : 'Verify Code & Set New Password'}
+                    </button>
+
+                    <div className="pt-2 flex items-center justify-between border-t border-slate-100 dark:border-slate-800 text-[11px]">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setResetStep('request');
+                          setResetError(null);
+                          setResetCodeInput('');
+                        }}
+                        className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-pointer"
+                      >
+                        &larr; Resend or Change Email
+                      </button>
+                      <button
+                        type="button"
+                        onClick={resetModalState}
+                        className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  /* STEP 3: Request Accepted! Enter new password */
+                  <form
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      if (!resetNewPassword || resetNewPassword.length < 6) {
+                        setResetError('New password must be at least 6 characters long.');
+                        return;
+                      }
+                      if (resetNewPassword !== resetConfirmPassword) {
+                        setResetError('New password and confirm password do not match.');
+                        return;
+                      }
+                      setResetLoading(true);
+                      setResetError(null);
+                      try {
+                        const res = await api.post('/auth/reset-password/confirm', {
+                          token: resetToken,
+                          new_password: resetNewPassword
+                        });
+                        const updatedUser = res.data.username || res.data.email || resetIdentifier;
+                        setResetSuccess(
+                          `Admin password has been updated. You can now login using "${updatedUser}" with your new password.`
+                        );
+                        setEmail(updatedUser);
+                        setPassword('');
+                      } catch (err: any) {
+                        setResetError(err.response?.data?.detail || 'Failed to update admin password.');
+                      } finally {
+                        setResetLoading(false);
+                      }
+                    }}
+                    className="space-y-3"
+                  >
+                    <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <div>
+                        <span className="font-bold">Request Accepted:</span> Authorized for{' '}
+                        <span className="font-mono font-semibold">{resetRequestInfo?.email || resetIdentifier}</span>
+                      </div>
+                    </div>
+
+                    {resetError && (
+                      <div className="p-2.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-xl text-rose-700 dark:text-rose-300 text-[11px] flex items-center gap-2">
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                        <span>{resetError}</span>
+                      </div>
+                    )}
 
                     <div className="grid grid-cols-2 gap-2">
                       <div>
@@ -451,17 +653,17 @@ export const LoginPage: React.FC = () => {
                     <div className="pt-2 flex items-center gap-2">
                       <button
                         type="button"
-                        onClick={() => setShowForgotModal(false)}
+                        onClick={resetModalState}
                         className="w-1/2 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors cursor-pointer"
                       >
                         Cancel
                       </button>
                       <button
                         type="submit"
-                        disabled={resetLoading || !resetIdentifier.trim() || !resetNewPassword || resetNewPassword !== resetConfirmPassword}
+                        disabled={resetLoading || !resetNewPassword || resetNewPassword !== resetConfirmPassword}
                         className="w-1/2 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5"
                       >
-                        {resetLoading ? 'Resetting...' : 'Confirm Reset'}
+                        {resetLoading ? 'Updating...' : 'Save Password'}
                       </button>
                     </div>
                   </form>
@@ -478,7 +680,7 @@ export const LoginPage: React.FC = () => {
                 </p>
                 <button
                   type="button"
-                  onClick={() => setShowForgotModal(false)}
+                  onClick={resetModalState}
                   className="w-full py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors cursor-pointer"
                 >
                   Understood
