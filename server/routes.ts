@@ -507,12 +507,13 @@ apiRouter.post('/auth/reset-password/request', async (req: Request, res: Respons
     approvalCode: code
   });
 
-  if (!emailResult.sent) {
-    console.error('[Auth Reset] Failed to deliver email:', emailResult.message);
-    return res.status(500).json({
-      detail: `Failed to deliver email: ${emailResult.message}. If running on Render free tier, outbound SMTP is blocked by Render firewall. Add GOOGLE_SCRIPT_URL, BREVO_API_KEY, or RESEND_API_KEY to send via HTTPS.`
-    });
-  }
+  // Always log reset credentials to server stdout so they are easily accessible in Render Deployment Logs
+  console.log(`\n======================================================`);
+  console.log(`[ADMIN PASSWORD RESET - ${adminUser.email}]`);
+  console.log(`Approval Code : ${code}`);
+  console.log(`Direct URL    : ${resetUrl}`);
+  console.log(`Email Status  : ${emailResult.sent ? 'DELIVERED via SMTP/API' : 'NOT DELIVERED (' + emailResult.message + ')'}`);
+  console.log(`======================================================\n`);
 
   db.logAudit(
     adminUser.id,
@@ -521,18 +522,23 @@ apiRouter.post('/auth/reset-password/request', async (req: Request, res: Respons
     'USER',
     adminUser.id,
     null,
-    { email: adminUser.email, requestId },
+    { email: adminUser.email, requestId, delivered: emailResult.sent },
     getClientIp(req)
   );
 
   return res.json({
     success: true,
-    message: `A 6-digit approval code has been sent to your Gmail inbox (${adminUser.email}). Please check your inbox or spam folder.`,
+    message: emailResult.sent
+      ? `A 6-digit approval code has been sent to your Gmail inbox (${adminUser.email}). Please check your inbox or spam folder.`
+      : `Email dispatch could not reach Gmail directly (Render Free Tier blocks outbound SMTP port 587). Your 6-digit approval code has been logged to Render console and is available below.`,
     requestId,
     email: adminUser.email,
     expires_at: expiresAt,
     is_smtp_configured: true,
-    email_delivered: true
+    email_delivered: emailResult.sent,
+    fallback_code: !emailResult.sent ? code : undefined,
+    reset_url: !emailResult.sent ? resetUrl : undefined,
+    delivery_error: emailResult.sent ? null : emailResult.message
   });
 });
 

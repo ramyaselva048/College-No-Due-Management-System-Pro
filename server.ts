@@ -13,8 +13,8 @@ if (typeof (dns as any).setDefaultResultOrder === 'function') {
   (dns as any).setDefaultResultOrder('ipv4first');
 }
 
-// In Google AI Studio, port 3000 is required by the reverse proxy.
-// When deployed on Render / Railway, process.env.PORT will be used automatically.
+// In Google AI Studio, port 3000 is strictly required by the reverse proxy.
+// When deployed on Render / Railway / Cloud hosts, process.env.PORT is respected.
 const PORT = process.env.APPLET_ID ? 3000 : (Number(process.env.PORT) || 3000);
 
 async function startServer() {

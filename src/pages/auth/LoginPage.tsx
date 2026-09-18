@@ -513,6 +513,35 @@ export const LoginPage: React.FC = () => {
                           A 6-digit verification approval code has been dispatched to <strong>{resetRequestInfo?.email || resetIdentifier}</strong>. Please check your Gmail inbox (and Spam folder), and enter the code below to proceed:
                         </p>
                       </div>
+
+                      {resetRequestInfo?.fallback_code && (
+                        <div className="p-3 bg-amber-50 dark:bg-amber-950/50 border border-amber-300 dark:border-amber-700 rounded-xl text-xs space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
+                              <Shield className="w-3.5 h-3.5 text-amber-600" />
+                              Render Free Tier Notice
+                            </span>
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-200 dark:bg-amber-900 text-amber-800 dark:text-amber-200 font-bold">
+                              SMTP Blocked
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed">
+                            Render Free Tier blocks outbound SMTP (port 587). Your approval code is logged in Render deployment console:
+                          </p>
+                          <div className="flex items-center justify-between gap-2 p-2 bg-white dark:bg-slate-900 rounded-lg border border-amber-200 dark:border-amber-800">
+                            <span className="font-mono text-base font-extrabold tracking-widest text-indigo-600 dark:text-indigo-400">
+                              {resetRequestInfo.fallback_code}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setResetCodeInput(resetRequestInfo.fallback_code)}
+                              className="px-2.5 py-1 text-[11px] font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors cursor-pointer"
+                            >
+                              Auto-Fill Code
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {resetError && (
