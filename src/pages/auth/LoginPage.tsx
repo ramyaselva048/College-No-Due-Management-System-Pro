@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { GraduationCap, Lock, Mail, ArrowRight, AlertCircle, Eye, EyeOff, Building2, ShieldCheck, CheckCircle2, KeyRound, Shield, Check, X, User, ExternalLink, Copy, HelpCircle } from 'lucide-react';
+import { GraduationCap, Lock, Mail, ArrowRight, AlertCircle, Eye, EyeOff, Building2, ShieldCheck, CheckCircle2, KeyRound, Shield, Check, X, User, ExternalLink, Copy, HelpCircle, Zap } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { UserRole } from '../../types';
 import { ThemeToggle } from '../../components/common/ThemeToggle';
@@ -29,6 +29,7 @@ export const LoginPage: React.FC = () => {
 
   // Reset Modal state
   const [showForgotModal, setShowForgotModal] = useState(false);
+  const [resetMode, setResetMode] = useState<'direct' | 'email'>('email');
   const [resetStep, setResetStep] = useState<'request' | 'verify' | 'password'>('request');
   const [resetIdentifier, setResetIdentifier] = useState('');
   const [resetToken, setResetToken] = useState('');
@@ -39,6 +40,8 @@ export const LoginPage: React.FC = () => {
     is_smtp_configured: boolean;
     preview_approval_url?: string;
     preview_code?: string;
+    approval_code?: string;
+    email_delivered?: boolean;
   } | null>(null);
   const [resetNewPassword, setResetNewPassword] = useState('');
   const [resetConfirmPassword, setResetConfirmPassword] = useState('');
@@ -50,6 +53,7 @@ export const LoginPage: React.FC = () => {
 
   const resetModalState = () => {
     setShowForgotModal(false);
+    setResetMode('email');
     setResetStep('request');
     setResetIdentifier('');
     setResetToken('');
@@ -360,6 +364,36 @@ export const LoginPage: React.FC = () => {
                   </button>
                 </div>
 
+                {/* Mode Selector Tabs (only shown on initial step) */}
+                {resetStep === 'request' && !resetSuccess && (
+                  <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl mb-3 text-xs font-semibold">
+                    <button
+                      type="button"
+                      onClick={() => { setResetMode('direct'); setResetError(null); }}
+                      className={`flex-1 py-1.5 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                        resetMode === 'direct'
+                          ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-2xs font-bold'
+                          : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                      }`}
+                    >
+                      <Zap className="w-3.5 h-3.5" />
+                      Instant Reset
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setResetMode('email'); setResetError(null); }}
+                      className={`flex-1 py-1.5 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                        resetMode === 'email'
+                          ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-2xs font-bold'
+                          : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                      }`}
+                    >
+                      <Mail className="w-3.5 h-3.5" />
+                      Email Code
+                    </button>
+                  </div>
+                )}
+
                 {resetSuccess ? (
                   <div className="space-y-4">
                     <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs flex items-start gap-2.5">
@@ -377,6 +411,126 @@ export const LoginPage: React.FC = () => {
                       Sign In with New Password
                     </button>
                   </div>
+                ) : resetStep === 'request' && resetMode === 'direct' ? (
+                  /* INSTANT DIRECT RESET FORM */
+                  <form
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      if (!resetIdentifier.trim()) {
+                        setResetError('Please enter your registered Admin Email.');
+                        return;
+                      }
+                      if (!resetNewPassword.trim() || resetNewPassword.length < 6) {
+                        setResetError('New password must be at least 6 characters.');
+                        return;
+                      }
+                      if (resetNewPassword !== resetConfirmPassword) {
+                        setResetError('Passwords do not match.');
+                        return;
+                      }
+                      setResetLoading(true);
+                      setResetError(null);
+                      try {
+                        const res = await api.post('/auth/reset-password/direct', {
+                          email: resetIdentifier.trim(),
+                          new_password: resetNewPassword.trim()
+                        });
+                        setResetSuccess(res.data.message || 'Password has been reset successfully! You can now log in.');
+                      } catch (err: any) {
+                        setResetError(err.response?.data?.detail || 'Failed to reset password. Please check your admin email.');
+                      } finally {
+                        setResetLoading(false);
+                      }
+                    }}
+                    className="space-y-3"
+                  >
+                    <div className="bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-900/60 rounded-xl p-3 text-[11px] text-indigo-900 dark:text-indigo-300 space-y-1">
+                      <p className="font-bold flex items-center gap-1.5">
+                        <Zap className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                        Instant Direct Reset
+                      </p>
+                      <p className="leading-relaxed text-[11px] text-slate-600 dark:text-slate-300">
+                        Quickly reset your password without waiting for email delivery.
+                      </p>
+                    </div>
+
+                    {resetError && (
+                      <div className="p-2.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-xl text-rose-700 dark:text-rose-300 text-[11px] flex items-center gap-2">
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                        <span>{resetError}</span>
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Registered Admin Email <span className="text-rose-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="email"
+                          required
+                          value={resetIdentifier}
+                          onChange={(e) => setResetIdentifier(e.target.value)}
+                          placeholder="e.g. ramyaselva048@gmail.com"
+                          className="w-full text-xs pl-8 pr-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
+                        />
+                        <Mail className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        New Password <span className="text-rose-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="password"
+                          required
+                          minLength={6}
+                          value={resetNewPassword}
+                          onChange={(e) => setResetNewPassword(e.target.value)}
+                          placeholder="Enter new password (min 6 chars)"
+                          className="w-full text-xs pl-8 pr-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
+                        />
+                        <Lock className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Confirm New Password <span className="text-rose-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="password"
+                          required
+                          minLength={6}
+                          value={resetConfirmPassword}
+                          onChange={(e) => setResetConfirmPassword(e.target.value)}
+                          placeholder="Confirm new password"
+                          className="w-full text-xs pl-8 pr-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
+                        />
+                        <Lock className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+                      </div>
+                    </div>
+
+                    <div className="pt-2 flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={resetModalState}
+                        className="w-1/2 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={resetLoading || !resetIdentifier.trim() || !resetNewPassword.trim()}
+                        className="w-1/2 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-indigo-600/20"
+                      >
+                        {resetLoading ? 'Resetting...' : 'Reset Password Now'}
+                      </button>
+                    </div>
+                  </form>
                 ) : resetStep === 'request' ? (
                   /* STEP 1: Enter current admin email */
                   <form
@@ -395,6 +549,7 @@ export const LoginPage: React.FC = () => {
                         });
                         setResetRequestInfo(res.data);
                         setResetToken('');
+                        setResetCodeInput('');
                         setResetStep('verify');
                       } catch (err: any) {
                         setResetError(err.response?.data?.detail || 'No Administrator found with this email. Please verify your current Admin Email.');
@@ -501,9 +656,15 @@ export const LoginPage: React.FC = () => {
                         {resetRequestInfo?.email || resetIdentifier}
                       </div>
 
-                      <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
-                        A 6-digit verification code has been sent to your Gmail inbox. Please enter the code below to proceed:
-                      </p>
+                      <div className="p-3 bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 rounded-xl text-indigo-900 dark:text-indigo-200 text-xs space-y-1.5">
+                        <p className="font-bold flex items-center gap-1.5 text-indigo-700 dark:text-indigo-300">
+                          <Mail className="w-4 h-4 text-indigo-600 shrink-0" />
+                          Code Sent to Your Email
+                        </p>
+                        <p className="text-[11px] leading-relaxed text-slate-600 dark:text-slate-300">
+                          A 6-digit verification approval code has been dispatched to <strong>{resetRequestInfo?.email || resetIdentifier}</strong>. Please check your Gmail inbox (and Spam folder), and enter the code below to proceed:
+                        </p>
+                      </div>
                     </div>
 
                     {resetError && (

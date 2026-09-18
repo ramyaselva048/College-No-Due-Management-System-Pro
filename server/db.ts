@@ -1279,7 +1279,7 @@ class InMemoryDatabase {
         email: 'ramyaselva048@gmail.com',
         username: 'ramyaselva',
         full_name: 'Dr. T. Senthilvel (Principal / Admin)',
-        defaultPass: 'AdminPassword123'
+        defaultPass: 'RamyaSasurie@123'
       },
       {
         email: 'admin@college.edu',

