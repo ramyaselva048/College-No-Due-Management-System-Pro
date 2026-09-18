@@ -567,91 +567,103 @@ export function buildCertificatePrintHtml(cert: Certificate, originUrl?: string)
       </div>
       ` : ''}
 
-      <!-- 2 & 3. Side-by-Side: Laboratory Courses & Institutional Common Nodes -->
-      <div class="two-col-grid">
-        <!-- Laboratory Courses -->
-        <div class="clearance-section">
-          <div class="section-banner" style="background-color: #f0fdf4; border-color: #bbf7d0;">
-            <span class="section-title" style="color: #166534;">
-              <svg style="width:11px; height:11px; color:#15803d;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"></path>
-              </svg>
-              Practical Sessions (${labs.length})
-            </span>
-            <span class="section-counter" style="background:#bbf7d0; color:#14532d;">${labs.length} Cleared</span>
-          </div>
-          <table class="clearance-table">
-            <thead>
-              <tr>
-                <th style="width: 45px;">Slot</th>
-                <th>Laboratory Course</th>
-                <th>In-Charge</th>
-                <th style="text-align: center; width: 70px;">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${labs.map((lab, idx) => `
-                <tr>
-                  <td><span class="slot-pill">${lab.slot || `L${idx + 1}`}</span></td>
-                  <td>
-                    <strong>${lab.name}</strong>
-                    ${lab.code ? `<span class="code-pill">${lab.code}</span>` : ''}
-                  </td>
-                  <td>${lab.faculty_name || 'Lab In-Charge'}</td>
-                  <td style="text-align: center;">
-                    <span class="status-badge-cleared">&#10003; Cleared</span>
-                  </td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
+      <!-- 2. Academic Clearance: Part II - Practical Laboratory Courses -->
+      ${labs.length > 0 ? `
+      <div class="clearance-section">
+        <div class="section-banner" style="background-color: #f0fdf4; border-color: #bbf7d0;">
+          <span class="section-title" style="color: #166534;">
+            <svg style="width:11px; height:11px; color:#15803d;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"></path>
+            </svg>
+            Part II: Practical Laboratories & Experiments (${labs.length} Courses)
+          </span>
+          <span class="section-counter" style="background:#bbf7d0; color:#14532d;">${labs.length} / ${labs.length} Cleared</span>
         </div>
-
-        <!-- Institutional Common Nodes -->
-        <div class="clearance-section">
-          <div class="section-banner" style="background-color: #fffbeb; border-color: #fde68a;">
-            <span class="section-title" style="color: #92400e;">
-              <svg style="width:11px; height:11px; color:#b45309;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"></path>
-              </svg>
-              Institutional Nodes (${commonNodes.length})
-            </span>
-            <span class="section-counter" style="background:#fef3c7; color:#78350f;">${commonNodes.length} Cleared</span>
-          </div>
-          <table class="clearance-table">
-            <thead>
+        <table class="clearance-table">
+          <thead>
+            <tr>
+              <th style="width: 50px;">Slot</th>
+              <th>Laboratory Course & Code</th>
+              <th>Lab In-Charge</th>
+              <th style="text-align: center; width: 85px;">Clearance</th>
+              <th style="text-align: right; width: 75px;">Verified</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${labs.map((lab, idx) => `
               <tr>
-                <th>Department / Node</th>
-                <th>Allocated Officer</th>
-                <th style="text-align: center; width: 70px;">Status</th>
+                <td><span class="slot-pill">${lab.slot || `LAB ${idx + 1}`}</span></td>
+                <td>
+                  <strong>${lab.name}</strong>
+                  ${lab.code ? `<span class="code-pill">${lab.code}</span>` : ''}
+                </td>
+                <td>${lab.faculty_name || 'Lab In-Charge'}</td>
+                <td style="text-align: center;">
+                  <span class="status-badge-cleared">&#10003; No Dues</span>
+                </td>
+                <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 8px; color: #64748b;">
+                  ${lab.signature_date || issuedDateStr}
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              ${commonNodes.map((node) => {
-                const isExempt = node.dues_status?.toLowerCase().includes('exempt');
-                const exemptLabel = node.dues_status?.includes('Day Scholar')
-                  ? 'Exempt (Day Scholar)'
-                  : node.dues_status?.includes('Hosteller')
-                  ? 'Exempt (Hosteller)'
-                  : 'Exempt';
-                return `
-                <tr>
-                  <td>
-                    <strong>${node.name}</strong>
-                  </td>
-                  <td>${node.faculty_name || 'Officer In-Charge'}</td>
-                  <td style="text-align: center;">
-                    ${isExempt 
-                      ? `<span class="status-badge-exempt">${exemptLabel}</span>` 
-                      : '<span class="status-badge-cleared">&#10003; No Dues</span>'}
-                  </td>
-                </tr>
-                `;
-              }).join('')}
-            </tbody>
-          </table>
-        </div>
+            `).join('')}
+          </tbody>
+        </table>
       </div>
+      ` : ''}
+
+      <!-- 3. Institutional Clearance: Part III - Central Nodes Table -->
+      ${commonNodes.length > 0 ? `
+      <div class="clearance-section">
+        <div class="section-banner" style="background-color: #fffbeb; border-color: #fde68a;">
+          <span class="section-title" style="color: #92400e;">
+            <svg style="width:11px; height:11px; color:#b45309;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"></path>
+            </svg>
+            Part III: Institutional Central Clearance Nodes (${commonNodes.length} Facilities)
+          </span>
+          <span class="section-counter" style="background:#fef3c7; color:#78350f;">${commonNodes.length} / ${commonNodes.length} Cleared</span>
+        </div>
+        <table class="clearance-table">
+          <thead>
+            <tr>
+              <th style="width: 50px;">Slot</th>
+              <th>Department / Central Facility</th>
+              <th>Officer In-Charge</th>
+              <th style="text-align: center; width: 85px;">Clearance</th>
+              <th style="text-align: right; width: 75px;">Verified</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${commonNodes.map((node, idx) => {
+              const isExempt = node.dues_status?.toLowerCase().includes('exempt');
+              const exemptLabel = node.dues_status?.includes('Day Scholar')
+                ? 'Exempt (Day Scholar)'
+                : node.dues_status?.includes('Hosteller')
+                ? 'Exempt (Hosteller)'
+                : 'Exempt';
+              return `
+              <tr>
+                <td><span class="slot-pill">${node.slot || `COM ${idx + 1}`}</span></td>
+                <td>
+                  <strong>${node.name}</strong>
+                  ${node.code ? `<span class="code-pill">${node.code}</span>` : ''}
+                </td>
+                <td>${node.faculty_name || 'Officer In-Charge'}</td>
+                <td style="text-align: center;">
+                  ${isExempt 
+                    ? `<span class="status-badge-exempt">${exemptLabel}</span>` 
+                    : '<span class="status-badge-cleared">&#10003; No Dues</span>'}
+                </td>
+                <td style="text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 8px; color: #64748b;">
+                  ${node.signature_date || issuedDateStr}
+                </td>
+              </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+      ` : ''}
 
       <!-- Institutional Clearance Confirmation Note -->
       <div style="padding: 4px 10px; background-color: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 6px; font-size: 9px; color: #065f46; text-align: center; font-weight: 600;">

@@ -30,7 +30,6 @@ export const LoginPage: React.FC = () => {
   // Reset Modal state
   const [showForgotModal, setShowForgotModal] = useState(false);
   const [resetIdentifier, setResetIdentifier] = useState('');
-  const [resetNewUsername, setResetNewUsername] = useState('');
   const [resetNewPassword, setResetNewPassword] = useState('');
   const [resetConfirmPassword, setResetConfirmPassword] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
@@ -247,7 +246,6 @@ export const LoginPage: React.FC = () => {
                     setResetError(null);
                     setResetSuccess(null);
                     setResetIdentifier(email || '');
-                    setResetNewUsername('');
                     setResetNewPassword('');
                     setResetConfirmPassword('');
                     setShowForgotModal(true);
@@ -321,7 +319,7 @@ export const LoginPage: React.FC = () => {
                     </div>
                     <div>
                       <h3 className="text-sm font-bold text-slate-900 dark:text-white">Reset Admin Credentials</h3>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400">Update username & password</p>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">Update admin password</p>
                     </div>
                   </div>
                   <button
@@ -339,7 +337,7 @@ export const LoginPage: React.FC = () => {
                     Strict Security Enforcement
                   </p>
                   <p className="leading-relaxed">
-                    Once reset, <strong>only the updated password and updated username</strong> will be accepted. Old passwords and old usernames will be permanently rejected.
+                    Once reset, <strong>only the updated password</strong> will be accepted. Old passwords will be permanently rejected.
                   </p>
                 </div>
 
@@ -368,7 +366,7 @@ export const LoginPage: React.FC = () => {
                     onSubmit={async (e) => {
                       e.preventDefault();
                       if (!resetIdentifier.trim()) {
-                        setResetError('Please enter your current Admin Username or Email.');
+                        setResetError('Please enter your current Admin Email.');
                         return;
                       }
                       if (!resetNewPassword || resetNewPassword.length < 6) {
@@ -384,17 +382,16 @@ export const LoginPage: React.FC = () => {
                       try {
                         const res = await api.post('/auth/reset-password', {
                           identifier: resetIdentifier.trim(),
-                          new_username: resetNewUsername.trim() || undefined,
                           new_password: resetNewPassword
                         });
-                        const updatedUser = res.data.username || res.data.email || resetNewUsername || resetIdentifier;
+                        const updatedUser = res.data.username || res.data.email || resetIdentifier;
                         setResetSuccess(
-                          `Admin credentials have been updated. You can now login using: "${updatedUser}" with your new password. Any old credentials will no longer open access.`
+                          `Admin password has been updated. You can now login using: "${updatedUser}" with your new password.`
                         );
                         setEmail(updatedUser);
                         setPassword('');
                       } catch (err: any) {
-                        setResetError(err.response?.data?.detail || 'Failed to reset admin credentials. Please verify your current identifier.');
+                        setResetError(err.response?.data?.detail || 'Failed to reset admin credentials. Please verify your current Admin Email.');
                       } finally {
                         setResetLoading(false);
                       }
@@ -410,27 +407,14 @@ export const LoginPage: React.FC = () => {
 
                     <div>
                       <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                        Current Admin Username or Email <span className="text-rose-500">*</span>
+                        Current Admin Email <span className="text-rose-500">*</span>
                       </label>
                       <input
-                        type="text"
+                        type="email"
                         required
                         value={resetIdentifier}
                         onChange={(e) => setResetIdentifier(e.target.value)}
-                        placeholder="e.g. admin or admin@college.edu"
-                        className="w-full text-xs px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                        New Admin Username <span className="text-slate-400 font-normal">(Optional)</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={resetNewUsername}
-                        onChange={(e) => setResetNewUsername(e.target.value)}
-                        placeholder="Leave blank to keep current username"
+                        placeholder="e.g. admin@college.edu"
                         className="w-full text-xs px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
                       />
                     </div>

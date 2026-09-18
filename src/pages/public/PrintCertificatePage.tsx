@@ -217,10 +217,10 @@ export const PrintCertificatePage: React.FC = () => {
             max-width: 100% !important;
             height: 284mm !important;
             max-height: 284mm !important;
-            padding: 12px 18px !important;
+            padding: 14px 18px !important;
             margin: 0 !important;
-            border: 2px double #1e1b4b !important;
-            border-radius: 8px !important;
+            border: 3px solid #0f172a !important;
+            border-radius: 4px !important;
             box-shadow: none !important;
             page-break-inside: avoid !important;
             page-break-after: avoid !important;
@@ -250,7 +250,7 @@ export const PrintCertificatePage: React.FC = () => {
           <div>
             <h1 className="font-display font-bold text-sm text-slate-900 flex items-center gap-1.5">
               <FileCheck2 className="w-4 h-4 text-indigo-600" />
-              1-Page Official Certificate Print & Download
+              Institutional Official No Due Certificate
             </h1>
             <p className="text-[11px] text-slate-500 font-mono">
               {cert.certificate_number} &bull; {cert.student_name}
@@ -278,7 +278,7 @@ export const PrintCertificatePage: React.FC = () => {
             className="px-3.5 py-2 text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-2xs disabled:opacity-50"
           >
             <Download className="w-3.5 h-3.5 text-indigo-600" />
-            {downloading ? 'Downloading...' : 'Download Full PDF'}
+            {downloading ? 'Downloading...' : 'Download Official PDF'}
           </button>
           <button
             onClick={handlePrintNow}
@@ -292,123 +292,146 @@ export const PrintCertificatePage: React.FC = () => {
       {/* Printable Sheet (Fits cleanly on 1 Page A4) */}
       <div
         id="certificate-print-sheet"
-        className="w-full max-w-[840px] bg-white rounded-2xl p-4 sm:p-7 border-2 sm:border-3 border-indigo-950/20 shadow-xl print:shadow-none print:border-2 print:border-indigo-950 relative overflow-hidden"
+        className="w-full max-w-[840px] bg-white rounded-xl p-5 sm:p-7 border-[3px] border-slate-900 shadow-2xl print:shadow-none print:border-[3px] print:border-slate-900 relative overflow-hidden"
       >
+        {/* Inner Gold Framing Border */}
+        <div className="absolute inset-1.5 sm:inset-2 border border-amber-600/40 rounded-lg pointer-events-none"></div>
+
+        {/* Decorative Corner Embellishments */}
+        <div className="absolute top-2.5 left-2.5 text-amber-700/60 font-serif text-xs select-none pointer-events-none">&#10022;</div>
+        <div className="absolute top-2.5 right-2.5 text-amber-700/60 font-serif text-xs select-none pointer-events-none">&#10022;</div>
+        <div className="absolute bottom-2.5 left-2.5 text-amber-700/60 font-serif text-xs select-none pointer-events-none">&#10022;</div>
+        <div className="absolute bottom-2.5 right-2.5 text-amber-700/60 font-serif text-xs select-none pointer-events-none">&#10022;</div>
+
         {/* Subtle Watermark BG */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.028] select-none">
-          <GraduationCap className="w-80 h-80 text-indigo-950" />
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03] select-none">
+          <GraduationCap className="w-96 h-96 text-slate-900" />
         </div>
 
-        {/* Certificate Content - Compact & Clean One-Page Assembly */}
-        <div className="relative z-10 text-center space-y-2.5 flex flex-col justify-between h-full">
-          {/* Header / Crest */}
-          <div className="border-b border-slate-200 pb-2">
-            <div className="w-10 h-10 rounded-xl bg-indigo-900 text-white flex items-center justify-center mx-auto mb-1.5 shadow-sm">
-              <GraduationCap className="w-6 h-6" />
+        {/* Certificate Content */}
+        <div className="relative z-10 text-center space-y-2 flex flex-col justify-between h-full">
+          {/* 1. Header / College Crest */}
+          <div className="border-b border-slate-300 pb-2">
+            <div className="flex items-center justify-center gap-2 mb-1">
+              <div className="w-9 h-9 rounded-lg bg-slate-900 text-amber-400 flex items-center justify-center shadow-xs border border-amber-500/40">
+                <GraduationCap className="w-5 h-5" />
+              </div>
+              <div className="text-left">
+                <h2 className="font-serif font-black text-lg sm:text-xl text-slate-950 uppercase tracking-tight leading-tight">
+                  Apex College of Engineering
+                </h2>
+                <p className="text-[8px] sm:text-[9px] font-bold text-amber-900 tracking-wider uppercase">
+                  (Autonomous Institution &bull; Affiliated to Anna University &bull; Approved by AICTE, New Delhi)
+                </p>
+              </div>
             </div>
-            <h2 className="font-display font-black text-lg sm:text-xl text-indigo-950 uppercase tracking-tight">
-              College of Engineering
-            </h2>
-            <p className="text-[9.5px] font-bold text-slate-600 tracking-wider uppercase mt-0.5">
-              Autonomous Institution &bull; Approved by AICTE &bull; Affiliated to Anna University &bull; Accredited NAAC 'A+'
+            <p className="text-[8px] sm:text-[8.5px] font-semibold text-slate-600 tracking-wide uppercase">
+              Accredited with 'A+' Grade by NAAC &bull; NBA Tier-1 Accredited &bull; ISO 9001:2015 Certified
             </p>
-            <p className="text-[8.5px] text-slate-500 font-semibold tracking-wide mt-0.5 uppercase">
-              Office of Academic Affairs & Institutional Clearances (CIAT & End Semester)
+            <p className="text-[8px] font-bold text-slate-500 tracking-widest uppercase mt-0.5">
+              Office of Academic Affairs &bull; Controller of Examinations &bull; Institutional Clearance Cell
             </p>
           </div>
 
-          {/* Title & Metadata Ribbon */}
+          {/* 2. Certificate Title & Verification Metadata Ribbon */}
           <div>
-            <h3 className="font-display font-black text-sm sm:text-base text-slate-900 uppercase tracking-tight">
+            <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-slate-100 border border-slate-300 text-slate-800 text-[9px] font-bold uppercase tracking-widest">
+              <span>Official Institutional Document</span>
+            </div>
+            <h3 className="font-serif font-black text-sm sm:text-base text-slate-950 uppercase tracking-tight mt-1">
               Institutional No Due Clearance Certificate
             </h3>
-            <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-5 py-1 px-3 bg-slate-50 rounded-lg border border-slate-200 text-[9.5px] font-mono text-slate-600 max-w-2xl mx-auto mt-1">
+            <p className="text-[8.5px] italic text-slate-500 font-serif">
+              (Issued for Graduation, CIAT & End Semester Examination Clearance)
+            </p>
+
+            <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 py-1 px-3 bg-slate-50/90 rounded-md border border-slate-200 text-[9px] font-mono text-slate-700 max-w-2xl mx-auto mt-1">
               <div>
                 <span className="text-slate-400">Cert No: </span>
-                <span className="font-bold text-slate-900">{cert.certificate_number}</span>
+                <span className="font-bold text-slate-950">{cert.certificate_number}</span>
               </div>
-              <div className="h-2.5 w-px bg-slate-200"></div>
+              <div className="h-2.5 w-px bg-slate-300"></div>
               <div>
-                <span className="text-slate-400">Verification: </span>
-                <span className="font-bold text-indigo-700">{cert.verification_code}</span>
+                <span className="text-slate-400">Security Code: </span>
+                <span className="font-bold text-indigo-800">{cert.verification_code}</span>
               </div>
-              <div className="h-2.5 w-px bg-slate-200"></div>
+              <div className="h-2.5 w-px bg-slate-300"></div>
               <div>
-                <span className="text-slate-400">Period: </span>
+                <span className="text-slate-400">Academic Year: </span>
                 <span className="font-bold text-slate-900">{acadYear} (Sem {sem})</span>
               </div>
-              <div className="h-2.5 w-px bg-slate-200"></div>
+              <div className="h-2.5 w-px bg-slate-300"></div>
               <div>
-                <span className="inline-flex items-center gap-1 font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 text-[9px]">
+                <span className="inline-flex items-center gap-1 font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-300 text-[8.5px]">
                   <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" /> ALL DUES CLEARED
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Candidate Details Matrix (Compact 3-column / 6-item box) */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-slate-50/80 p-2.5 rounded-lg border border-slate-200 text-left text-xs">
+          {/* 3. Candidate Profile Details Matrix */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-slate-50/70 p-2 sm:p-2.5 rounded-lg border border-slate-200 text-left text-xs">
             <div>
-              <span className="block text-[8.5px] font-bold uppercase tracking-wider text-slate-400">Candidate Name</span>
-              <span className="font-bold text-slate-900 text-[11px] truncate block">{(cert.student_name || 'STUDENT').toUpperCase()}</span>
+              <span className="block text-[8px] font-bold uppercase tracking-wider text-slate-500">Student Name</span>
+              <span className="font-bold text-slate-950 text-[11px] truncate block">{(cert.student_name || 'STUDENT').toUpperCase()}</span>
             </div>
             <div>
-              <span className="block text-[8.5px] font-bold uppercase tracking-wider text-slate-400">Register Number</span>
-              <span className="font-mono font-bold text-indigo-900 text-[11px] truncate block">{cert.register_number || 'N/A'}</span>
+              <span className="block text-[8px] font-bold uppercase tracking-wider text-slate-500">Register Number</span>
+              <span className="font-mono font-bold text-indigo-950 text-[11px] truncate block">{cert.register_number || 'N/A'}</span>
             </div>
             <div>
-              <span className="block text-[8.5px] font-bold uppercase tracking-wider text-slate-400">Degree / Program</span>
+              <span className="block text-[8px] font-bold uppercase tracking-wider text-slate-500">Degree & Branch</span>
               <span className="font-bold text-slate-800 text-[10.5px] truncate block">{cert.course_name || 'B.E. Computer Science'}</span>
             </div>
             <div>
-              <span className="block text-[8.5px] font-bold uppercase tracking-wider text-slate-400">Department</span>
+              <span className="block text-[8px] font-bold uppercase tracking-wider text-slate-500">Department</span>
               <span className="font-bold text-slate-800 text-[10.5px] truncate block">{cert.department_name || 'Computer Science & Engineering'}</span>
             </div>
             <div>
-              <span className="block text-[8.5px] font-bold uppercase tracking-wider text-slate-400">Semester & Year</span>
-              <span className="font-bold text-slate-800 text-[10.5px] truncate block">Semester {sem} / Year {year} ({acadYear})</span>
+              <span className="block text-[8px] font-bold uppercase tracking-wider text-slate-500">Academic Year & Semester</span>
+              <span className="font-bold text-slate-800 text-[10.5px] truncate block">Year {year} / Semester {sem} ({acadYear})</span>
             </div>
             <div>
-              <span className="block text-[8.5px] font-bold uppercase tracking-wider text-slate-400">Examination Purpose</span>
+              <span className="block text-[8px] font-bold uppercase tracking-wider text-slate-500">Examination / Clearance Scope</span>
               <span className="font-bold text-slate-800 text-[10.5px] truncate block">{examType}</span>
             </div>
           </div>
 
-          {/* 1. Academic Clearance: Theory Courses Table */}
+          {/* 4. Academic Clearance: Theory Courses Table */}
           {subjects.length > 0 && (
             <div className="text-left">
-              <div className="flex items-center justify-between px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-t-lg">
+              <div className="flex items-center justify-between px-2.5 py-1 bg-slate-100/80 border border-slate-300 rounded-t-md">
                 <div className="flex items-center gap-1.5">
-                  <BookOpen className="w-3.5 h-3.5 text-indigo-600" />
-                  <span className="font-display font-bold text-[10px] text-slate-900 uppercase tracking-wide">
-                    Academic Clearance: Theory Courses ({subjects.length} Subjects)
+                  <BookOpen className="w-3.5 h-3.5 text-slate-800" />
+                  <span className="font-serif font-bold text-[9.5px] text-slate-950 uppercase tracking-wide">
+                    Part I: Academic Clearance &bull; Theory Courses ({subjects.length} Subjects)
                   </span>
                 </div>
-                <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-full">
+                <span className="text-[8.5px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 px-1.5 py-0.2 rounded">
                   {subjects.length} / {subjects.length} Cleared
                 </span>
               </div>
-              <div className="border border-t-0 border-slate-200 rounded-b-lg overflow-hidden">
+              <div className="border border-t-0 border-slate-300 rounded-b-md overflow-hidden">
                 <table className="w-full text-xs text-left">
-                  <thead className="bg-slate-50/70 text-[9px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200">
+                  <thead className="bg-slate-50 text-[8.5px] font-bold text-slate-600 uppercase tracking-wider border-b border-slate-200">
                     <tr>
-                      <th className="px-2 py-1 w-14">Slot</th>
-                      <th className="px-2 py-1">Course Code & Title</th>
-                      <th className="px-2 py-1">Faculty In-Charge</th>
-                      <th className="px-2 py-1 text-center w-24">Status</th>
-                      <th className="px-2 py-1 text-right w-20">Verified</th>
+                      <th className="px-2 py-0.5 w-14">Slot</th>
+                      <th className="px-2 py-0.5">Course Code & Title</th>
+                      <th className="px-2 py-0.5">Faculty In-Charge</th>
+                      <th className="px-2 py-0.5 text-center w-24">Clearance</th>
+                      <th className="px-2 py-0.5 text-right w-20">Verified</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 text-slate-700 text-[10px]">
+                  <tbody className="divide-y divide-slate-100 text-slate-800 text-[9.5px]">
                     {subjects.map((sub, idx) => (
                       <tr key={idx} className="hover:bg-slate-50/50">
-                        <td className="px-2 py-0.5 font-mono text-[9px] font-bold text-slate-500">
+                        <td className="px-2 py-0.5 font-mono text-[8.5px] font-bold text-slate-500">
                           <span className="bg-slate-100 px-1 py-0.2 rounded border border-slate-200">{sub.slot || `SUB ${idx + 1}`}</span>
                         </td>
                         <td className="px-2 py-0.5">
-                          <span className="font-bold text-slate-900">{sub.name}</span>
+                          <span className="font-semibold text-slate-950">{sub.name}</span>
                           {sub.code && (
-                            <span className="ml-1.5 font-mono text-[9px] font-bold text-indigo-700 bg-indigo-50 px-1 py-0.2 rounded border border-indigo-100">
+                            <span className="ml-1.5 font-mono text-[8.5px] font-bold text-indigo-900 bg-indigo-50 px-1 py-0.2 rounded border border-indigo-100">
                               {sub.code}
                             </span>
                           )}
@@ -417,11 +440,11 @@ export const PrintCertificatePage: React.FC = () => {
                           {sub.faculty_name || 'Faculty In-Charge'}
                         </td>
                         <td className="px-2 py-0.5 text-center">
-                          <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded">
+                          <span className="inline-flex items-center gap-1 text-[8.5px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded">
                             <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" /> No Dues
                           </span>
                         </td>
-                        <td className="px-2 py-0.5 text-right font-mono text-[9px] text-slate-400">
+                        <td className="px-2 py-0.5 text-right font-mono text-[8.5px] text-slate-500">
                           {sub.signature_date || issuedDateStr}
                         </td>
                       </tr>
@@ -432,46 +455,55 @@ export const PrintCertificatePage: React.FC = () => {
             </div>
           )}
 
-          {/* 2 & 3. Side-by-Side: Laboratory Courses & Institutional Common Nodes */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-left">
-            {/* Practical Laboratory Clearance */}
-            <div>
-              <div className="flex items-center justify-between px-2 py-1 bg-emerald-50/70 border border-emerald-200 rounded-t-lg">
+          {/* 5. Academic Clearance: Part II - Practical Laboratories Table */}
+          {labs && labs.length > 0 && (
+            <div className="text-left">
+              <div className="flex items-center justify-between px-2.5 py-1 bg-slate-100/90 border border-slate-300 rounded-t-md">
                 <div className="flex items-center gap-1.5">
-                  <FlaskConical className="w-3.5 h-3.5 text-emerald-700" />
-                  <span className="font-display font-bold text-[10px] text-emerald-950 uppercase tracking-wide">
-                    Practical Sessions ({labs.length})
+                  <FlaskConical className="w-3.5 h-3.5 text-emerald-800" />
+                  <span className="font-serif font-bold text-[9.5px] text-slate-950 uppercase tracking-wide">
+                    Part II: Practical Laboratories & Experiments ({labs.length} Courses)
                   </span>
                 </div>
-                <span className="text-[9px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-200 px-1.5 py-0.2 rounded-full">
-                  {labs.length} Cleared
+                <span className="text-[8.5px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 px-1.5 py-0.2 rounded">
+                  {labs.length} / {labs.length} Cleared
                 </span>
               </div>
-              <div className="border border-t-0 border-slate-200 rounded-b-lg overflow-hidden">
-                <table className="w-full text-[9.5px] text-left">
-                  <thead className="bg-slate-50/70 text-[8.5px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200">
+              <div className="border border-t-0 border-slate-300 rounded-b-md overflow-hidden">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-slate-50 text-[8.5px] font-bold text-slate-600 uppercase tracking-wider border-b border-slate-200">
                     <tr>
-                      <th className="px-2 py-1 w-12">Slot</th>
-                      <th className="px-2 py-1">Practical Course</th>
-                      <th className="px-2 py-1">In-Charge</th>
-                      <th className="px-2 py-1 text-center w-16">Status</th>
+                      <th className="px-2 py-0.5 w-14">Slot</th>
+                      <th className="px-2 py-0.5">Laboratory Course & Code</th>
+                      <th className="px-2 py-0.5">Lab In-Charge</th>
+                      <th className="px-2 py-0.5 text-center w-24">Clearance</th>
+                      <th className="px-2 py-0.5 text-right w-20">Verified</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 text-slate-700">
+                  <tbody className="divide-y divide-slate-100 text-slate-800 text-[9px]">
                     {labs.map((lab, idx) => (
-                      <tr key={idx}>
-                        <td className="px-2 py-0.5 font-mono text-[8.5px] font-bold text-slate-500">
-                          <span className="bg-slate-100 px-1 py-0.2 rounded border border-slate-200">{lab.slot || `L${idx + 1}`}</span>
+                      <tr key={idx} className="hover:bg-slate-50/50">
+                        <td className="px-2 py-0.5 font-mono text-[8px] font-bold text-slate-500">
+                          <span className="bg-slate-100 px-1 py-0.2 rounded border border-slate-200">{lab.slot || `LAB ${idx + 1}`}</span>
                         </td>
-                        <td className="px-2 py-0.5 font-semibold text-slate-900 truncate max-w-[120px]">
-                          {lab.name}
-                          {lab.code && <span className="ml-1 text-[8.5px] text-indigo-600">[{lab.code}]</span>}
+                        <td className="px-2 py-0.5">
+                          <span className="font-semibold text-slate-950">{lab.name}</span>
+                          {lab.code && (
+                            <span className="ml-1.5 font-mono text-[8px] font-bold text-indigo-900 bg-indigo-50 px-1 py-0.2 rounded border border-indigo-100">
+                              {lab.code}
+                            </span>
+                          )}
                         </td>
-                        <td className="px-2 py-0.5 text-slate-600 truncate max-w-[90px]">{lab.faculty_name || 'Lab In-Charge'}</td>
+                        <td className="px-2 py-0.5 text-slate-600 font-medium">
+                          {lab.faculty_name || 'Lab In-Charge'}
+                        </td>
                         <td className="px-2 py-0.5 text-center">
-                          <span className="inline-flex items-center gap-0.5 text-[8.5px] font-bold text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200">
-                            <Check className="w-2.5 h-2.5" /> Cleared
+                          <span className="inline-flex items-center gap-1 text-[8px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded">
+                            <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" /> No Dues
                           </span>
+                        </td>
+                        <td className="px-2 py-0.5 text-right font-mono text-[8px] text-slate-500">
+                          {lab.signature_date || issuedDateStr}
                         </td>
                       </tr>
                     ))}
@@ -479,48 +511,65 @@ export const PrintCertificatePage: React.FC = () => {
                 </table>
               </div>
             </div>
+          )}
 
-            {/* Institutional Common Nodes */}
-            <div>
-              <div className="flex items-center justify-between px-2 py-1 bg-amber-50/70 border border-amber-200 rounded-t-lg">
+          {/* 6. Institutional Clearance: Part III - Common Nodes Table */}
+          {commonNodes && commonNodes.length > 0 && (
+            <div className="text-left">
+              <div className="flex items-center justify-between px-2.5 py-1 bg-slate-100/90 border border-slate-300 rounded-t-md">
                 <div className="flex items-center gap-1.5">
-                  <Building2 className="w-3.5 h-3.5 text-amber-700" />
-                  <span className="font-display font-bold text-[10px] text-amber-950 uppercase tracking-wide">
-                    Institutional Nodes ({commonNodes.length})
+                  <Building2 className="w-3.5 h-3.5 text-amber-800" />
+                  <span className="font-serif font-bold text-[9.5px] text-slate-950 uppercase tracking-wide">
+                    Part III: Institutional Central Clearance Nodes ({commonNodes.length} Facilities)
                   </span>
                 </div>
-                <span className="text-[9px] font-bold text-amber-800 bg-amber-100 border border-amber-200 px-1.5 py-0.2 rounded-full">
-                  {commonNodes.length} Cleared
+                <span className="text-[8.5px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 px-1.5 py-0.2 rounded">
+                  {commonNodes.length} / {commonNodes.length} Cleared
                 </span>
               </div>
-              <div className="border border-t-0 border-slate-200 rounded-b-lg overflow-hidden">
-                <table className="w-full text-[9.5px] text-left">
-                  <thead className="bg-slate-50/70 text-[8.5px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200">
+              <div className="border border-t-0 border-slate-300 rounded-b-md overflow-hidden">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-slate-50 text-[8.5px] font-bold text-slate-600 uppercase tracking-wider border-b border-slate-200">
                     <tr>
-                      <th className="px-2 py-1">Department / Center</th>
-                      <th className="px-2 py-1">Officer</th>
-                      <th className="px-2 py-1 text-center w-16">Status</th>
+                      <th className="px-2 py-0.5 w-14">Slot</th>
+                      <th className="px-2 py-0.5">Department / Central Facility</th>
+                      <th className="px-2 py-0.5">Officer In-Charge</th>
+                      <th className="px-2 py-0.5 text-center w-24">Clearance</th>
+                      <th className="px-2 py-0.5 text-right w-20">Verified</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 text-slate-700">
+                  <tbody className="divide-y divide-slate-100 text-slate-800 text-[9px]">
                     {commonNodes.map((node, idx) => {
                       const isExempt = node.dues_status?.toLowerCase().includes('exempted');
                       return (
-                        <tr key={idx}>
-                          <td className="px-2 py-0.5 font-semibold text-slate-900 truncate max-w-[130px]">
-                            {node.name}
+                        <tr key={idx} className="hover:bg-slate-50/50">
+                          <td className="px-2 py-0.5 font-mono text-[8px] font-bold text-slate-500">
+                            <span className="bg-slate-100 px-1 py-0.2 rounded border border-slate-200">{node.slot || `COM ${idx + 1}`}</span>
                           </td>
-                          <td className="px-2 py-0.5 text-slate-600 truncate max-w-[90px]">{node.faculty_name || 'Officer'}</td>
-                          <td className="px-2 py-0.5 text-center">
-                            {isExempt ? (
-                              <span className="text-[8.5px] font-bold text-sky-700 bg-sky-50 px-1 py-0.2 rounded border border-sky-200">
-                                Exempt
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-0.5 text-[8.5px] font-bold text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200">
-                                <Check className="w-2.5 h-2.5" /> No Dues
+                          <td className="px-2 py-0.5">
+                            <span className="font-semibold text-slate-950">{node.name}</span>
+                            {node.code && (
+                              <span className="ml-1.5 font-mono text-[8px] font-bold text-indigo-900 bg-indigo-50 px-1 py-0.2 rounded border border-indigo-100">
+                                {node.code}
                               </span>
                             )}
+                          </td>
+                          <td className="px-2 py-0.5 text-slate-600 font-medium">
+                            {node.faculty_name || 'Officer In-Charge'}
+                          </td>
+                          <td className="px-2 py-0.5 text-center">
+                            {isExempt ? (
+                              <span className="inline-flex items-center gap-1 text-[8px] font-bold text-sky-800 bg-sky-50 border border-sky-200 px-1.5 py-0.2 rounded">
+                                Exempted
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-[8px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded">
+                                <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" /> No Dues
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-2 py-0.5 text-right font-mono text-[8px] text-slate-500">
+                            {node.signature_date || issuedDateStr}
                           </td>
                         </tr>
                       );
@@ -529,60 +578,76 @@ export const PrintCertificatePage: React.FC = () => {
                 </table>
               </div>
             </div>
+          )}
+
+          {/* 6. Formal Attestation Declaration Statement */}
+          <div className="p-1.5 bg-slate-50 border border-slate-300 rounded-md text-[9px] text-slate-800 font-serif text-center leading-normal">
+            <strong>OFFICIAL ATTESTATION:</strong> This is to certify that all academic departments, specialized laboratories, central library, physical education cell, hostels, and finance accounts have been audited. There are <strong>NO OUTSTANDING LIABILITIES, FEES, OR DUES</strong> against this student.
           </div>
 
-          {/* Institutional Confirmation Note */}
-          <div className="p-1.5 bg-emerald-50 border border-emerald-200 rounded-lg text-[9.5px] text-emerald-800 font-medium text-center">
-            Institutional Clearance Record: There are <span className="font-bold uppercase">NO OUTSTANDING DUES</span> or liabilities recorded against this student across any college division or facility.
-          </div>
-
-          {/* Footer with QR Code, Autonomous Seal and Signatures */}
-          <div className="pt-2 border-t border-slate-200 flex items-center justify-between gap-4">
+          {/* 7. Footer: QR Code, Autonomous Seal & Signatories */}
+          <div className="pt-2 border-t-2 border-slate-300 flex items-center justify-between gap-3">
             {/* QR Verification */}
-            <div className="flex items-center gap-2.5 text-left">
-              <div className="p-1 bg-white rounded-lg border border-slate-200 shadow-2xs">
+            <div className="flex items-center gap-2 text-left">
+              <div className="p-1 bg-white rounded border border-slate-300 shadow-2xs">
                 <img
                   src={qrUrl}
                   alt="Certificate QR Verification"
-                  className="w-14 h-14"
+                  className="w-13 h-13"
                 />
               </div>
               <div>
-                <p className="text-[10px] font-bold text-slate-900 flex items-center gap-1">
-                  <ShieldCheck className="w-3 h-3 text-emerald-600" /> Tamper-Proof QR
+                <p className="text-[9.5px] font-bold text-slate-950 flex items-center gap-1">
+                  <ShieldCheck className="w-3 h-3 text-emerald-700" /> Tamper-Proof QR
                 </p>
-                <p className="text-[8.5px] text-slate-500 max-w-[130px] leading-tight">
-                  Scan to verify authentic status on college portal
+                <p className="text-[8px] text-slate-500 max-w-[120px] leading-tight">
+                  Scan to verify authentic certificate on institutional registry
                 </p>
-                <p className="text-[8.5px] font-mono text-indigo-600 mt-0.5">
+                <p className="text-[8px] font-mono text-indigo-900 font-bold mt-0.5">
                   {cert.verification_code}
                 </p>
               </div>
             </div>
 
-            {/* Institutional Seal Emblem */}
-            <div className="hidden sm:block border-2 border-double border-amber-400 bg-amber-50/70 rounded-lg px-2.5 py-1 text-center text-amber-900">
-              <div className="text-[7.5px] font-bold tracking-wider uppercase">Autonomous Institution</div>
-              <div className="text-[8.5px] font-black tracking-wide">[ SEAL VERIFIED ]</div>
-              <div className="text-[7.5px] text-emerald-700 font-bold uppercase">Audit Cleared</div>
+            {/* Official Seal Emblem */}
+            <div className="border-2 border-amber-600/70 bg-amber-50/60 rounded-full w-18 h-18 p-1 flex flex-col items-center justify-center text-center text-amber-950 shadow-2xs">
+              <span className="text-[6.5px] font-bold uppercase tracking-wider text-amber-800">Apex College</span>
+              <span className="text-[7.5px] font-serif font-black uppercase text-slate-900">[ SEAL ]</span>
+              <span className="text-[6.5px] font-bold text-emerald-800 uppercase">AUDITED</span>
             </div>
 
             {/* Authorized Signatories */}
-            <div className="flex items-center gap-5 text-center text-xs">
+            <div className="flex items-center gap-4 sm:gap-6 text-center text-xs">
               <div>
-                <div className="h-6 flex items-end justify-center font-display italic text-indigo-900 font-semibold text-xs">
-                  Dean of Academics
+                <div className="h-5 flex items-end justify-center font-serif italic text-slate-900 font-semibold text-[11px]">
+                  Faculty Advisor
                 </div>
-                <div className="w-24 border-t border-slate-400 mt-0.5"></div>
-                <p className="text-[8.5px] text-slate-500 font-bold uppercase mt-0.5">Dean (Academics)</p>
+                <div className="w-20 sm:w-22 border-t border-slate-400 mt-0.5"></div>
+                <p className="text-[8px] text-slate-600 font-bold uppercase mt-0.5">Faculty Advisor</p>
               </div>
 
               <div>
-                <div className="h-6 flex items-end justify-center font-display italic text-indigo-900 font-semibold text-xs">
+                <div className="h-5 flex items-end justify-center font-serif italic text-slate-900 font-semibold text-[11px]">
+                  Dr. K. Manickam
+                </div>
+                <div className="w-20 sm:w-22 border-t border-slate-400 mt-0.5"></div>
+                <p className="text-[8px] text-slate-600 font-bold uppercase mt-0.5">HOD / Dept Chair</p>
+              </div>
+
+              <div>
+                <div className="h-5 flex items-end justify-center font-serif italic text-slate-900 font-semibold text-[11px]">
+                  Dean (Academics)
+                </div>
+                <div className="w-20 sm:w-22 border-t border-slate-400 mt-0.5"></div>
+                <p className="text-[8px] text-slate-600 font-bold uppercase mt-0.5">Dean of Academics</p>
+              </div>
+
+              <div>
+                <div className="h-5 flex items-end justify-center font-serif italic text-slate-900 font-semibold text-[11px]">
                   Dr. T. Senthilvel
                 </div>
-                <div className="w-24 border-t border-slate-400 mt-0.5"></div>
-                <p className="text-[8.5px] text-slate-500 font-bold uppercase mt-0.5">Principal</p>
+                <div className="w-20 sm:w-22 border-t border-slate-400 mt-0.5"></div>
+                <p className="text-[8px] text-slate-600 font-bold uppercase mt-0.5">Principal</p>
               </div>
             </div>
           </div>

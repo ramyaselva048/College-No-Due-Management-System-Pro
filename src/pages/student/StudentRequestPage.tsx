@@ -14,7 +14,6 @@ import {
   Sparkles,
   ArrowRight,
   ShieldCheck,
-  Printer,
   Calendar,
   User,
   GraduationCap
@@ -298,18 +297,6 @@ export const StudentRequestPage: React.FC = () => {
               >
                 <Award className="w-4 h-4" /> View Verified Certificate
               </Link>
-              <button
-                onClick={() => {
-                  try {
-                    window.print();
-                  } catch (e) {
-                    alert('Print command was restricted in this frame. Please press Ctrl+P or open the Certificate page to print.');
-                  }
-                }}
-                className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors inline-flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <Printer className="w-3.5 h-3.5" /> Print Clearance Summary
-              </button>
             </div>
           </div>
         </div>

@@ -808,17 +808,6 @@ export const AdminCertificatesPage: React.FC = () => {
                         {/* Actions (Requirement 2) */}
                         <td className="py-3.5 px-4 text-right whitespace-nowrap">
                           <div className="flex items-center justify-end gap-1.5">
-                            {/* Action: View Certificate */}
-                            <button
-                              id={`btn-view-cert-${cert.id}`}
-                              onClick={() => handleViewCertificate(cert)}
-                              className="px-2.5 py-1.5 text-[11px] font-bold text-slate-700 bg-white hover:bg-slate-100 rounded-lg transition-colors border border-slate-200 shadow-2xs inline-flex items-center gap-1"
-                              title="View Official Certificate"
-                            >
-                              <Eye className="w-3.5 h-3.5 text-indigo-600" />
-                              View
-                            </button>
-
                             {/* Action: Download PDF */}
                             <button
                               id={`btn-download-cert-${cert.id}`}
@@ -958,18 +947,13 @@ export const AdminCertificatesPage: React.FC = () => {
                   {/* Card Bottom Actions */}
                   <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between gap-1.5">
                     <button
-                      onClick={() => handleViewCertificate(cert)}
-                      className="flex-1 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50 border border-slate-200 rounded-xl transition-colors flex items-center justify-center gap-1"
-                    >
-                      <Eye className="w-3.5 h-3.5 text-indigo-600" /> View
-                    </button>
-                    <button
                       onClick={() => handleDownloadPdf(cert)}
                       disabled={downloadingId === cert.id}
-                      className="py-1.5 px-3 text-xs font-bold text-slate-700 hover:bg-slate-50 border border-slate-200 rounded-xl transition-colors flex items-center gap-1"
+                      className="flex-1 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50 border border-slate-200 rounded-xl transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
                       title="Download PDF"
                     >
-                      <Download className="w-3.5 h-3.5 text-slate-600" />
+                      <Download className={`w-3.5 h-3.5 text-slate-600 ${downloadingId === cert.id ? 'animate-bounce' : ''}`} />
+                      <span>PDF</span>
                     </button>
                     <button
                       onClick={() => setQrCert(cert)}
@@ -977,6 +961,7 @@ export const AdminCertificatesPage: React.FC = () => {
                       title="Verify QR"
                     >
                       <QrCode className="w-3.5 h-3.5" />
+                      <span>Verify QR</span>
                     </button>
                     {cert.is_valid && (
                       <button

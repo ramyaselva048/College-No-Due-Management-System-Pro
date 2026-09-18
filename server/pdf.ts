@@ -153,8 +153,8 @@ export function generateCertificatePdf(
     'BT',
     '/F1 15.5 Tf',
     '0.1 0.12 0.3 rg',
-    '1 0 0 1 115 794 Tm',
-    `(${esc('COLLEGE OF ENGINEERING (AUTONOMOUS)')}) Tj`,
+    '1 0 0 1 100 794 Tm',
+    `(${esc('APEX COLLEGE OF ENGINEERING (AUTONOMOUS)')}) Tj`,
     '/F2 8.5 Tf',
     '0.3 0.35 0.45 rg',
     '1 0 0 1 108 780 Tm',
@@ -265,37 +265,37 @@ export function generateCertificatePdf(
     'ET'
   );
 
-  // 4. Section 1: Theory Courses Table (Y: 418 to 618, height: 200)
+  // 4. Part I: Theory Courses Table
+  const theoryTopHeaderY = 598;
+  const theoryHeaderH = 16;
   lines.push(
-    // Table Header Bar (Y: 598 to 618, height: 20)
+    // Table Header Bar
     '0.15 0.22 0.48 rg',
-    '35 598 525 20 re f',
+    `35 ${theoryTopHeaderY} 525 ${theoryHeaderH} re f`,
     'BT',
     '/F1 7.5 Tf',
     '1 1 1 rg',
-    '1 0 0 1 42 605 Tm',
+    `1 0 0 1 42 ${theoryTopHeaderY + 5} Tm`,
     `(${esc('SLOT')}) Tj`,
-    '1 0 0 1 82 605 Tm',
-    `(${esc('THEORY COURSE CODE & TITLE')}) Tj`,
-    '1 0 0 1 325 605 Tm',
+    `1 0 0 1 82 ${theoryTopHeaderY + 5} Tm`,
+    `(${esc(`PART I: THEORY COURSES CLEARANCE (${subjects.length} SUBJECTS)`)}) Tj`,
+    `1 0 0 1 325 ${theoryTopHeaderY + 5} Tm`,
     `(${esc('FACULTY IN-CHARGE')}) Tj`,
-    '1 0 0 1 450 605 Tm',
+    `1 0 0 1 445 ${theoryTopHeaderY + 5} Tm`,
     `(${esc('CLEARANCE')}) Tj`,
-    '1 0 0 1 515 605 Tm',
+    `1 0 0 1 515 ${theoryTopHeaderY + 5} Tm`,
     `(${esc('VERIFIED')}) Tj`,
     'ET'
   );
 
-  // Render Theory Rows with generous height to eliminate bottom gap
-  // Available height for theory rows: from 598 down to 418 (height = 180 pt)
   const theoryDisplay = subjects.slice(0, 6);
-  const nTheory = Math.max(theoryDisplay.length, 1);
-  const theoryRowH = 180 / nTheory;
+  const theoryRowH = 15;
+  let currentY = theoryTopHeaderY;
 
   theoryDisplay.forEach((sub, idx) => {
     const isEven = idx % 2 === 0;
-    const rowBottomY = 598 - (idx + 1) * theoryRowH;
-    const textBaseY = rowBottomY + Math.round(theoryRowH * 0.35);
+    const rowBottomY = currentY - theoryRowH;
+    const textBaseY = rowBottomY + 4;
 
     lines.push(
       isEven ? '0.985 0.99 0.995 rg' : '1 1 1 rg',
@@ -303,137 +303,153 @@ export function generateCertificatePdf(
       '0.9 0.92 0.95 RG 0.3 w',
       `35 ${rowBottomY} 525 ${theoryRowH} re S`,
       'BT',
-      '/F1 7.5 Tf',
+      '/F1 7 Tf',
       '0.3 0.35 0.45 rg',
       `1 0 0 1 42 ${textBaseY} Tm`,
       `(${esc(sub.slot || `SUB ${idx + 1}`)}) Tj`,
-      '/F1 8 Tf',
+      '/F1 7.5 Tf',
       '0.1 0.15 0.25 rg',
       `1 0 0 1 82 ${textBaseY} Tm`,
-      `(${esc(sub.code ? `[${sub.code}] ` : '')}${esc((sub.name || '').length > 44 ? sub.name.substring(0, 42) + '..' : sub.name)}) Tj`,
-      '/F2 7.5 Tf',
+      `(${esc(sub.code ? `[${sub.code}] ` : '')}${esc(sub.name || '')}) Tj`,
+      '/F2 7 Tf',
       '0.2 0.25 0.35 rg',
       `1 0 0 1 325 ${textBaseY} Tm`,
-      `(${esc((sub.faculty_name || 'Faculty In-Charge').length > 24 ? (sub.faculty_name || '').substring(0, 22) + '..' : (sub.faculty_name || ''))}) Tj`,
-      '/F1 7.5 Tf',
+      `(${esc(sub.faculty_name || 'Faculty In-Charge')}) Tj`,
+      '/F1 7 Tf',
       '0.05 0.5 0.2 rg',
-      `1 0 0 1 450 ${textBaseY} Tm`,
+      `1 0 0 1 445 ${textBaseY} Tm`,
       `(${esc('[OK] NO DUES')}) Tj`,
-      '/F2 7 Tf',
+      '/F2 6.5 Tf',
       '0.45 0.5 0.55 rg',
       `1 0 0 1 515 ${textBaseY} Tm`,
-      `(${esc(sub.signature_date || 'Certified')}) Tj`,
+      `(${esc(sub.signature_date || '16/09/2026')}) Tj`,
       'ET'
     );
+    currentY = rowBottomY;
   });
 
-  // 5. Section 2 & 3: Side-by-Side Split for Practical Labs & Institutional Nodes (Y: 194 to 404, height: 210)
-  // Left: Labs (X: 35 to 290, width: 255)
-  // Right: Common Nodes (X: 298 to 560, width: 262)
-  const splitTopHeaderY = 384; // Header from 384 to 404 (height: 20)
-
-  // Left Table Header (Labs)
+  // 5. Part II: Practical Laboratory Courses Table (Stacked directly below Part I)
+  currentY -= 6; // small gap
+  const labHeaderH = 16;
+  const labTopHeaderY = currentY - labHeaderH;
   lines.push(
     '0.05 0.45 0.32 rg',
-    `35 ${splitTopHeaderY} 255 20 re f`,
+    `35 ${labTopHeaderY} 525 ${labHeaderH} re f`,
     'BT',
     '/F1 7.5 Tf',
     '1 1 1 rg',
-    `1 0 0 1 42 ${splitTopHeaderY + 6} Tm`,
-    `(${esc('PRACTICAL / LABORATORY SESSIONS')}) Tj`,
-    `1 0 0 1 195 ${splitTopHeaderY + 6} Tm`,
-    `(${esc('IN-CHARGE')}) Tj`,
-    `1 0 0 1 255 ${splitTopHeaderY + 6} Tm`,
-    `(${esc('STATUS')}) Tj`,
-    'ET'
-  );
-
-  // Right Table Header (Common Nodes)
-  lines.push(
-    '0.75 0.42 0.1 rg',
-    `298 ${splitTopHeaderY} 262 20 re f`,
-    'BT',
-    '/F1 7.5 Tf',
-    '1 1 1 rg',
-    `1 0 0 1 305 ${splitTopHeaderY + 6} Tm`,
-    `(${esc('INSTITUTIONAL COMMON NODES')}) Tj`,
-    `1 0 0 1 445 ${splitTopHeaderY + 6} Tm`,
-    `(${esc('OFFICER')}) Tj`,
-    `1 0 0 1 520 ${splitTopHeaderY + 6} Tm`,
+    `1 0 0 1 42 ${labTopHeaderY + 5} Tm`,
+    `(${esc('SLOT')}) Tj`,
+    `1 0 0 1 82 ${labTopHeaderY + 5} Tm`,
+    `(${esc(`PART II: PRACTICAL LABORATORIES & EXPERIMENTS (${labs.length} COURSES)`)}) Tj`,
+    `1 0 0 1 325 ${labTopHeaderY + 5} Tm`,
+    `(${esc('LAB IN-CHARGE')}) Tj`,
+    `1 0 0 1 445 ${labTopHeaderY + 5} Tm`,
     `(${esc('CLEARANCE')}) Tj`,
+    `1 0 0 1 515 ${labTopHeaderY + 5} Tm`,
+    `(${esc('VERIFIED')}) Tj`,
     'ET'
   );
 
-  // Render Lab Rows (left) and Common Node Rows (right)
-  // Available height: from 384 down to 194 (height = 190 pt)
-  const maxRows = Math.max(labs.length, commonNodes.length, 5);
-  const splitRowH = 190 / maxRows;
+  currentY = labTopHeaderY;
+  const labRowH = 15;
+  labs.forEach((lab, idx) => {
+    const isEven = idx % 2 === 0;
+    const rowBottomY = currentY - labRowH;
+    const textBaseY = rowBottomY + 4;
 
-  for (let r = 0; r < maxRows; r++) {
-    const lab = labs[r];
-    const node = commonNodes[r];
-    const rowBottomY = splitTopHeaderY - (r + 1) * splitRowH;
-    const textBaseY = rowBottomY + Math.round(splitRowH * 0.35);
-
-    // Left row (Lab)
     lines.push(
-      r % 2 === 0 ? '0.985 0.995 0.99 rg' : '1 1 1 rg',
-      `35 ${rowBottomY} 255 ${splitRowH} re f`,
-      '0.9 0.92 0.94 RG 0.3 w',
-      `35 ${rowBottomY} 255 ${splitRowH} re S`
+      isEven ? '0.985 0.995 0.99 rg' : '1 1 1 rg',
+      `35 ${rowBottomY} 525 ${labRowH} re f`,
+      '0.9 0.92 0.95 RG 0.3 w',
+      `35 ${rowBottomY} 525 ${labRowH} re S`,
+      'BT',
+      '/F1 7 Tf',
+      '0.3 0.35 0.45 rg',
+      `1 0 0 1 42 ${textBaseY} Tm`,
+      `(${esc(lab.slot || `LAB ${idx + 1}`)}) Tj`,
+      '/F1 7.5 Tf',
+      '0.1 0.15 0.25 rg',
+      `1 0 0 1 82 ${textBaseY} Tm`,
+      `(${esc(lab.code ? `[${lab.code}] ` : '')}${esc(lab.name || '')}) Tj`,
+      '/F2 7 Tf',
+      '0.2 0.25 0.35 rg',
+      `1 0 0 1 325 ${textBaseY} Tm`,
+      `(${esc(lab.faculty_name || 'Lab In-Charge')}) Tj`,
+      '/F1 7 Tf',
+      '0.05 0.5 0.2 rg',
+      `1 0 0 1 445 ${textBaseY} Tm`,
+      `(${esc('[OK] NO DUES')}) Tj`,
+      '/F2 6.5 Tf',
+      '0.45 0.5 0.55 rg',
+      `1 0 0 1 515 ${textBaseY} Tm`,
+      `(${esc(lab.signature_date || '16/09/2026')}) Tj`,
+      'ET'
     );
+    currentY = rowBottomY;
+  });
 
-    if (lab) {
-      lines.push(
-        'BT',
-        '/F1 7 Tf',
-        '0.3 0.35 0.4 rg',
-        `1 0 0 1 39 ${textBaseY} Tm`,
-        `(${esc(lab.slot || `L${r + 1}`)}) Tj`,
-        '/F1 7.5 Tf',
-        '0.1 0.15 0.25 rg',
-        `1 0 0 1 63 ${textBaseY} Tm`,
-        `(${esc((lab.name || '').length > 26 ? lab.name.substring(0, 24) + '..' : lab.name)}) Tj`,
-        '/F2 7 Tf',
-        '0.3 0.35 0.4 rg',
-        `1 0 0 1 195 ${textBaseY} Tm`,
-        `(${esc((lab.faculty_name || '').length > 13 ? lab.faculty_name!.substring(0, 11) + '..' : (lab.faculty_name || 'In-Charge'))}) Tj`,
-        '/F1 7 Tf',
-        '0.05 0.5 0.2 rg',
-        `1 0 0 1 255 ${textBaseY} Tm`,
-        `(${esc('[OK] NO DUES')}) Tj`,
-        'ET'
-      );
-    }
+  // 6. Part III: Institutional Clearance Nodes Table (Stacked directly below Part II)
+  currentY -= 6; // small gap
+  const nodeHeaderH = 16;
+  const nodeTopHeaderY = currentY - nodeHeaderH;
+  lines.push(
+    '0.72 0.4 0.1 rg',
+    `35 ${nodeTopHeaderY} 525 ${nodeHeaderH} re f`,
+    'BT',
+    '/F1 7.5 Tf',
+    '1 1 1 rg',
+    `1 0 0 1 42 ${nodeTopHeaderY + 5} Tm`,
+    `(${esc('SLOT')}) Tj`,
+    `1 0 0 1 82 ${nodeTopHeaderY + 5} Tm`,
+    `(${esc(`PART III: INSTITUTIONAL CENTRAL CLEARANCE NODES (${commonNodes.length} FACILITIES)`)}) Tj`,
+    `1 0 0 1 325 ${nodeTopHeaderY + 5} Tm`,
+    `(${esc('OFFICER IN-CHARGE')}) Tj`,
+    `1 0 0 1 445 ${nodeTopHeaderY + 5} Tm`,
+    `(${esc('CLEARANCE')}) Tj`,
+    `1 0 0 1 515 ${nodeTopHeaderY + 5} Tm`,
+    `(${esc('VERIFIED')}) Tj`,
+    'ET'
+  );
 
-    // Right row (Common Node)
+  currentY = nodeTopHeaderY;
+  const nodeRowH = 15;
+  commonNodes.forEach((node, idx) => {
+    const isEven = idx % 2 === 0;
+    const isExempt = node.dues_status?.toLowerCase().includes('exempted');
+    const rowBottomY = currentY - nodeRowH;
+    const textBaseY = rowBottomY + 4;
+
     lines.push(
-      r % 2 === 0 ? '0.995 0.99 0.985 rg' : '1 1 1 rg',
-      `298 ${rowBottomY} 262 ${splitRowH} re f`,
-      '0.9 0.92 0.94 RG 0.3 w',
-      `298 ${rowBottomY} 262 ${splitRowH} re S`
+      isEven ? '0.995 0.99 0.985 rg' : '1 1 1 rg',
+      `35 ${rowBottomY} 525 ${nodeRowH} re f`,
+      '0.9 0.92 0.95 RG 0.3 w',
+      `35 ${rowBottomY} 525 ${nodeRowH} re S`,
+      'BT',
+      '/F1 7 Tf',
+      '0.3 0.35 0.45 rg',
+      `1 0 0 1 42 ${textBaseY} Tm`,
+      `(${esc(node.slot || `COM ${idx + 1}`)}) Tj`,
+      '/F1 7.5 Tf',
+      '0.1 0.15 0.25 rg',
+      `1 0 0 1 82 ${textBaseY} Tm`,
+      `(${esc(node.code ? `[${node.code}] ` : '')}${esc(node.name || '')}) Tj`,
+      '/F2 7 Tf',
+      '0.2 0.25 0.35 rg',
+      `1 0 0 1 325 ${textBaseY} Tm`,
+      `(${esc(node.faculty_name || 'Officer In-Charge')}) Tj`,
+      '/F1 7 Tf',
+      isExempt ? '0.1 0.4 0.7 rg' : '0.05 0.5 0.2 rg',
+      `1 0 0 1 445 ${textBaseY} Tm`,
+      `(${esc(isExempt ? 'EXEMPTED' : '[OK] NO DUES')}) Tj`,
+      '/F2 6.5 Tf',
+      '0.45 0.5 0.55 rg',
+      `1 0 0 1 515 ${textBaseY} Tm`,
+      `(${esc(node.signature_date || '16/09/2026')}) Tj`,
+      'ET'
     );
-
-    if (node) {
-      const isExempt = node.dues_status?.toLowerCase().includes('exempted');
-      lines.push(
-        'BT',
-        '/F1 7.5 Tf',
-        '0.1 0.15 0.25 rg',
-        `1 0 0 1 305 ${textBaseY} Tm`,
-        `(${esc((node.name || '').length > 27 ? node.name.substring(0, 25) + '..' : node.name)}) Tj`,
-        '/F2 7 Tf',
-        '0.3 0.35 0.4 rg',
-        `1 0 0 1 445 ${textBaseY} Tm`,
-        `(${esc((node.faculty_name || '').length > 15 ? node.faculty_name!.substring(0, 13) + '..' : (node.faculty_name || 'Officer'))}) Tj`,
-        '/F1 7 Tf',
-        isExempt ? '0.1 0.4 0.7 rg' : '0.05 0.5 0.2 rg',
-        `1 0 0 1 520 ${textBaseY} Tm`,
-        `(${esc(isExempt ? 'EXEMPTED' : '[OK] NO DUES')}) Tj`,
-        'ET'
-      );
-    }
-  }
+    currentY = rowBottomY;
+  });
 
   // 6. Institutional Clearance Confirmation Banner (Y: 158 to 182, height: 24)
   const bannerY = 158;
@@ -551,7 +567,7 @@ export function generateCertificatePdf(
     '/F2 6.5 Tf',
     '0.45 0.5 0.55 rg',
     `1 0 0 1 372 ${footerY + 12} Tm`,
-    `(${esc('College of Engineering (Autonomous)')}) Tj`,
+    `(${esc('Apex College of Engineering (Autonomous)')}) Tj`,
     'ET'
   );
 
