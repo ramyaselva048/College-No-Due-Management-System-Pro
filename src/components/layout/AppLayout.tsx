@@ -63,7 +63,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       { label: 'Dashboard', href: '/staff/dashboard', icon: LayoutDashboard },
       { label: 'Clearance Inbox', href: '/staff/approvals', icon: CheckCircle2 },
       { label: 'Students Directory', href: '/staff/students', icon: Users },
-      { label: 'Department Dues', href: '/staff/dues', icon: Receipt },
+      { label: 'Student Dues', href: '/staff/dues', icon: Receipt },
     ];
   } else if (isAdmin) {
     navItems = [

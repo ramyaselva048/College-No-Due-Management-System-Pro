@@ -277,7 +277,7 @@ export const StaffDuesPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="font-display font-bold text-xl text-slate-900">
-            Department Dues & Fines Ledger
+            Student Dues & Fines Ledger
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
             Add, edit, manage, and settle student liabilities for {staffProfile?.department_name || 'Assigned Department'}
@@ -351,7 +351,7 @@ export const StaffDuesPage: React.FC = () => {
 
       {/* Table */}
       {loading ? (
-        <div className="py-20 text-center text-xs text-slate-400">Loading department dues...</div>
+        <div className="py-20 text-center text-xs text-slate-400">Loading student dues...</div>
       ) : filteredDues.length === 0 ? (
         <div className="bg-white rounded-2xl p-12 text-center border border-slate-200">
           <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center mx-auto mb-3">
@@ -361,7 +361,7 @@ export const StaffDuesPage: React.FC = () => {
           <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
             {students.length === 0
               ? 'No students enrolled yet. Once the Administrator registers students in the Admin Portal, you can record dues for them here.'
-              : 'No dues matching your selected filter. Click "Add New Due" to record a new department liability.'}
+              : 'No dues matching your selected filter. Click "Add New Due" to record a new student due.'}
           </p>
         </div>
       ) : (
@@ -483,7 +483,7 @@ export const StaffDuesPage: React.FC = () => {
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <PlusCircle className="w-5 h-5 text-indigo-600" />
-                <h3 className="font-display font-bold text-slate-900 text-base">Record New Department Due</h3>
+                <h3 className="font-display font-bold text-slate-900 text-base">Record New Student Due</h3>
               </div>
               <button
                 onClick={() => setIsAddModalOpen(false)}

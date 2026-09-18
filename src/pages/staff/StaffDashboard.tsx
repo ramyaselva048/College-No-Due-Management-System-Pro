@@ -173,7 +173,7 @@ export const StaffDashboard: React.FC = () => {
           <div>
             <div className="flex items-center gap-2 text-indigo-700 font-bold text-sm mb-1">
               <Receipt className="w-4 h-4" />
-              Department Dues & Fines Ledger
+              Student Dues & Fines Ledger
             </div>
             <p className="text-xs text-slate-500 leading-relaxed">
               Record new fines or fees against specific students, waive incorrect records with audit notes, or inspect settlement histories.
