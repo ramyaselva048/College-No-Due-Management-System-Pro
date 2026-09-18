@@ -495,6 +495,13 @@ apiRouter.post('/auth/reset-password/request', async (req: Request, res: Respons
     approvalCode: code
   });
 
+  if (!emailResult.sent) {
+    console.error('[Auth Reset] Failed to send email:', emailResult.message);
+    return res.status(500).json({
+      detail: `Failed to deliver email: ${emailResult.message}. Please check your SMTP settings.`
+    });
+  }
+
   db.logAudit(
     adminUser.id,
     adminUser.email,

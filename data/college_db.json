@@ -3,12 +3,12 @@
     {
       "id": 1,
       "email": "ramyaselva048@gmail.com",
-      "password_hash": "49dd5258bb9aca162e4bd4e9545c878ca6136b061ff0fe829ae1515fbd371e0a",
+      "password_hash": "5f884cae7b61909405349b222011823b961084a914ba636452e81983a399935e",
       "role": "ADMIN",
       "is_active": true,
       "is_registered": true,
       "created_at": "2026-09-09T07:28:18.693Z",
-      "updated_at": "2026-09-18T10:04:48.708Z",
+      "updated_at": "2026-09-18T10:56:34.521Z",
       "department_id": null,
       "full_name": "Dr. T. Senthilvel (Principal / Admin)",
       "username": "ramyaselva"
@@ -7746,6 +7746,61 @@
     }
   ],
   "auditLogs": [
+    {
+      "id": 663,
+      "user_id": 1,
+      "user_email": "ramyaselva048@gmail.com",
+      "action": "PASSWORD_RESET_REQUESTED",
+      "entity_type": "USER",
+      "entity_id": 1,
+      "new_values": "{\"email\":\"ramyaselva048@gmail.com\",\"requestId\":\"pr_1789731843237_zxy46\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2026-09-18T11:44:05.379Z"
+    },
+    {
+      "id": 662,
+      "user_id": 1,
+      "user_email": "ramyaselva048@gmail.com",
+      "action": "USER_LOGIN",
+      "entity_type": "USER",
+      "entity_id": 1,
+      "new_values": "{\"identifier\":\"ramyaselva048@gmail.com\",\"role\":\"ADMIN\"}",
+      "ip_address": "2409:40f4:2100:744b:4004:55e3:f06a:33e4",
+      "created_at": "2026-09-18T10:58:00.252Z"
+    },
+    {
+      "id": 661,
+      "user_id": 1,
+      "user_email": "ramyaselva048@gmail.com",
+      "action": "PASSWORD_RESET_COMPLETED",
+      "entity_type": "USER",
+      "entity_id": 1,
+      "new_values": "{\"requestId\":\"pr_1789728939014_jr45s\"}",
+      "ip_address": "2409:40f4:2100:744b:4004:55e3:f06a:33e4",
+      "created_at": "2026-09-18T10:56:34.526Z"
+    },
+    {
+      "id": 660,
+      "user_id": 1,
+      "user_email": "ramyaselva048@gmail.com",
+      "action": "PASSWORD_RESET_ACCEPTED",
+      "entity_type": "USER",
+      "entity_id": 1,
+      "new_values": "{\"requestId\":\"pr_1789728939014_jr45s\"}",
+      "ip_address": "2409:40f4:2100:744b:4004:55e3:f06a:33e4",
+      "created_at": "2026-09-18T10:56:14.543Z"
+    },
+    {
+      "id": 659,
+      "user_id": 1,
+      "user_email": "ramyaselva048@gmail.com",
+      "action": "PASSWORD_RESET_REQUESTED",
+      "entity_type": "USER",
+      "entity_id": 1,
+      "new_values": "{\"email\":\"ramyaselva048@gmail.com\",\"requestId\":\"pr_1789728939014_jr45s\"}",
+      "ip_address": "2409:40f4:2100:744b:4004:55e3:f06a:33e4",
+      "created_at": "2026-09-18T10:55:41.745Z"
+    },
     {
       "id": 658,
       "user_id": 1,
@@ -29937,6 +29992,30 @@
   ],
   "passwordResetRequests": [
     {
+      "id": "pr_1789731843237_zxy46",
+      "email": "ramyaselva048@gmail.com",
+      "user_id": 1,
+      "token": "19ca1c2db10fb1c02b6dd3fc71d854cc1068049f9a0bbe4f",
+      "code": "589597",
+      "status": "PENDING",
+      "created_at": "2026-09-18T11:44:03.237Z",
+      "expires_at": "2026-09-18T12:14:03.237Z",
+      "ip_address": "127.0.0.1"
+    },
+    {
+      "id": "pr_1789728939014_jr45s",
+      "email": "ramyaselva048@gmail.com",
+      "user_id": 1,
+      "token": "c3777c95c3d7106aeababe93d5ab9e21f66ae8a3d007d6c9",
+      "code": "701500",
+      "status": "COMPLETED",
+      "created_at": "2026-09-18T10:55:39.014Z",
+      "expires_at": "2026-09-18T11:25:39.014Z",
+      "ip_address": "2409:40f4:2100:744b:4004:55e3:f06a:33e4",
+      "accepted_at": "2026-09-18T10:56:14.538Z",
+      "completed_at": "2026-09-18T10:56:34.521Z"
+    },
+    {
       "id": "pr_1789728778030_jlk15",
       "email": "ramyaselva048@gmail.com",
       "user_id": 1,
@@ -30080,7 +30159,7 @@
     "noDueApprovals": 58,
     "certificates": 13,
     "notifications": 193,
-    "auditLogs": 659,
+    "auditLogs": 664,
     "subjectCourses": 1034
   }
 }

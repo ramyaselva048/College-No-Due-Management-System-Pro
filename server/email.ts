@@ -7,11 +7,15 @@ interface SendResetEmailParams {
   approvalCode: string;
 }
 
+// Built-in verified Gmail SMTP credentials (used as defaults if Render/Host environment variables are not set)
+const DEFAULT_SMTP_USER = 'ramyaselva048@gmail.com';
+const DEFAULT_SMTP_PASS = 'ngthpsdryoytezsj';
+const DEFAULT_SMTP_HOST = 'smtp.gmail.com';
+
 export function isSmtpConfigured(): boolean {
-  const host = process.env.SMTP_HOST;
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-  return Boolean((host && user && pass) || (user && pass));
+  const user = process.env.SMTP_USER || DEFAULT_SMTP_USER;
+  const pass = process.env.SMTP_PASS || DEFAULT_SMTP_PASS;
+  return Boolean(user && pass);
 }
 
 export async function sendPasswordResetEmail({
@@ -20,11 +24,11 @@ export async function sendPasswordResetEmail({
   resetUrl,
   approvalCode
 }: SendResetEmailParams): Promise<{ sent: boolean; message: string; configured: boolean }> {
-  const host = process.env.SMTP_HOST;
+  const host = process.env.SMTP_HOST || DEFAULT_SMTP_HOST;
   const port = Number(process.env.SMTP_PORT) || 587;
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-  const from = process.env.SMTP_FROM || user || 'noreply@college.edu';
+  const user = process.env.SMTP_USER || DEFAULT_SMTP_USER;
+  const pass = process.env.SMTP_PASS || DEFAULT_SMTP_PASS;
+  const from = process.env.SMTP_FROM || user || 'ramyaselva048@gmail.com';
 
   if (!isSmtpConfigured()) {
     console.log(`[Email Service] SMTP not configured. Password Reset Request dispatched for ${to}:`);
@@ -105,7 +109,7 @@ export async function sendPasswordResetEmail({
     await transporter.sendMail({
       from: `"Apex College Portal" <${from}>`,
       to,
-      subject: 'Action Required: Accept Password Reset Request',
+      subject: `Password Reset Code: ${approvalCode} — Apex College Portal`,
       text: `Hello ${adminName},\n\nA password reset request was initiated for your Administrator account (${to}).\n\nYour 6-digit approval code is: ${approvalCode}\n\nPlease click the following link to accept the request and reset your password:\n${resetUrl}\n\nThis link will expire in 30 minutes.\n\nIf you did not make this request, please ignore this email.`,
       html
     });
