@@ -1,10 +1,17 @@
 import 'dotenv/config';
+import dns from 'dns';
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
 import { apiRouter } from './server/routes';
 import { db } from './server/db';
+
+// Force IPv4 lookup first. Render and container environments do not have IPv6 routes,
+// which causes Node to fail with ENETUNREACH when connecting to smtp.gmail.com.
+if (typeof (dns as any).setDefaultResultOrder === 'function') {
+  (dns as any).setDefaultResultOrder('ipv4first');
+}
 
 // In Google AI Studio, port 3000 is required by the reverse proxy.
 // When deployed on Render / Railway, process.env.PORT will be used automatically.
